@@ -1,0 +1,1 @@
+from .routes import bp, init_app

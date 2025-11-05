@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Data</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Export Data</h1>
+        </header>
+        <main>
+            <section>
+                <h2>Select Export Format</h2>
+                <form action="{{ url_for('main.export_data') }}" method="post">
+                    <label for="format">Choose a format:</label>
+                    <select name="format" id="format">
+                        <option value="csv">CSV</option>
+                        <option value="json">JSON</option>
+                        <option value="xml">XML</option>
+                    </select>
+                    <button type="submit">Export</button>
+                </form>
+            </section>
+            <section>
+                <h2>Export History</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Format</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for export in exports %}
+                        <tr>
+                            <td>{{ export.date }}</td>
+                            <td>{{ export.format }}</td>
+                            <td>{{ export.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

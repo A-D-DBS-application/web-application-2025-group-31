@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dashboard</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li><a href="{{ url_for('main.watchlist') }}">Watchlist</a></li>
+                    <li><a href="{{ url_for('main.settings') }}">Settings</a></li>
+                    <li><a href="{{ url_for('main.logout') }}">Logout</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <section class="stats">
+                <h2>Your Statistics</h2>
+                <div class="stat-item">
+                    <h3>Total Companies</h3>
+                    <p>{{ total_companies }}</p>
+                </div>
+                <div class="stat-item">
+                    <h3>Active Alerts</h3>
+                    <p>{{ active_alerts }}</p>
+                </div>
+                <div class="stat-item">
+                    <h3>Recent Activities</h3>
+                    <p>{{ recent_activities }}</p>
+                </div>
+            </section>
+            <section class="recent-activities">
+                <h2>Recent Activities</h2>
+                <ul>
+                    {% for activity in activities %}
+                        <li>{{ activity }}</li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </main>
+        <footer>
+            <p>&copy; 2025 Your Company Name. All rights reserved.</p>
+        </footer>
+    </div>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<div class="filter-container">
+    <h2>Filters</h2>
+    <form id="filter-form">
+        <div class="filter-group">
+            <label for="category">Category:</label>
+            <select id="category" name="category">
+                <option value="">Select a category</option>
+                <option value="technology">Technology</option>
+                <option value="finance">Finance</option>
+                <option value="health">Health</option>
+                <option value="education">Education</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="date-range">Date Range:</label>
+            <input type="date" id="start-date" name="start-date">
+            <input type="date" id="end-date" name="end-date">
+        </div>
+        <div class="filter-group">
+            <label for="search">Search:</label>
+            <input type="text" id="search" name="search" placeholder="Search...">
+        </div>
+        <button type="submit">Apply Filters</button>
+    </form>
+</div>
+
+<style>
+    .filter-container {
+        padding: 20px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    .filter-group {
+        margin-bottom: 15px;
+    }
+    .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+    }
+    .filter-group select,
+    .filter-group input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    button {
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #0056b3;
+    }
+</style>

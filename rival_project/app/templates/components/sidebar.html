@@ -1,0 +1,41 @@
+<div class="sidebar">
+    <h2>Navigation</h2>
+    <ul>
+        <li><a href="{{ url_for('main.index') }}">Home</a></li>
+        <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('main.company_detail') }}">Company Details</a></li>
+        <li><a href="{{ url_for('main.compare') }}">Compare</a></li>
+        <li><a href="{{ url_for('main.trends') }}">Trends</a></li>
+        <li><a href="{{ url_for('main.watchlist') }}">Watchlist</a></li>
+        <li><a href="{{ url_for('main.alerts') }}">Alerts</a></li>
+        <li><a href="{{ url_for('main.settings') }}">Settings</a></li>
+        <li><a href="{{ url_for('main.export') }}">Export</a></li>
+    </ul>
+</div>
+
+<style>
+    .sidebar {
+        width: 250px;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-right: 1px solid #dee2e6;
+    }
+    .sidebar h2 {
+        font-size: 1.5em;
+        margin-bottom: 15px;
+    }
+    .sidebar ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    .sidebar ul li {
+        margin: 10px 0;
+    }
+    .sidebar ul li a {
+        text-decoration: none;
+        color: #007bff;
+    }
+    .sidebar ul li a:hover {
+        text-decoration: underline;
+    }
+</style>

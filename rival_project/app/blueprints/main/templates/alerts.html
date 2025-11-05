@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <title>Alerts</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Alerts</h1>
+        <div class="alert-list">
+            {% for alert in alerts %}
+                <div class="alert">
+                    <h2>{{ alert.title }}</h2>
+                    <p>{{ alert.message }}</p>
+                    <span class="alert-date">{{ alert.date }}</span>
+                </div>
+            {% else %}
+                <p>No alerts available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Detail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ company.name }}</h1>
+        <div class="company-info">
+            <p><strong>Description:</strong> {{ company.description }}</p>
+            <p><strong>Founded:</strong> {{ company.founded }}</p>
+            <p><strong>Location:</strong> {{ company.location }}</p>
+            <p><strong>Website:</strong> <a href="{{ company.website }}" target="_blank">{{ company.website }}</a></p>
+        </div>
+        <div class="actions">
+            <a href="{{ url_for('main.index') }}" class="btn">Back to Dashboard</a>
+            <a href="{{ url_for('main.compare', company_id=company.id) }}" class="btn">Compare</a>
+        </div>
+    </div>
+</body>
+</html>

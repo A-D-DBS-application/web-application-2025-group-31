@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trends</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Trends Overview</h1>
+        </header>
+        <main>
+            <section class="trends">
+                <h2>Current Trends</h2>
+                <div id="trends-list">
+                    <!-- Placeholder for trends data -->
+                    <p>No trends available at the moment.</p>
+                </div>
+            </section>
+        </main>
+        <footer>
+            <p>&copy; 2025 Your Company Name</p>
+        </footer>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

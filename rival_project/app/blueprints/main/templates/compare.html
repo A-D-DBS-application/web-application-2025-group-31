@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Comparison Page</h1>
+        </header>
+        <main>
+            <section class="comparison-section">
+                <h2>Compare Items</h2>
+                <form action="{{ url_for('main.compare') }}" method="POST">
+                    <div class="form-group">
+                        <label for="item1">Select First Item:</label>
+                        <select name="item1" id="item1" required>
+                            <option value="">--Select Item--</option>
+                            <!-- Add options dynamically here -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="item2">Select Second Item:</label>
+                        <select name="item2" id="item2" required>
+                            <option value="">--Select Item--</option>
+                            <!-- Add options dynamically here -->
+                        </select>
+                    </div>
+                    <button type="submit">Compare</button>
+                </form>
+            </section>
+            <section class="results-section">
+                <h2>Comparison Results</h2>
+                <!-- Display comparison results here -->
+            </section>
+        </main>
+        <footer>
+            <p>&copy; 2025 Your Company Name</p>
+        </footer>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

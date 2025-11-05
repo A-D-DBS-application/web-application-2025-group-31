@@ -1,11 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Rival Project</title>
-</head>
-<body>
-    <h1>Welkom bij Rival.com 🚀</h1>
-    <p>Flask werkt!</p>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}Welcome | Rival Project{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>Welcome · Welkom bij Rival.com 🚀</h1>
+        <p>Flask werkt! De app is correct geconfigureerd.</p>
+        <div class="cta-row">
+            <a class="btn" href="{{ url_for('main.dashboard') }}">Ga naar Dashboard</a>
+            <a class="btn secondary" href="{{ url_for('auth.login') }}">Inloggen</a>
+        </div>
+    </div>
+    <style>
+        .hero { padding: 2rem 1rem; }
+        .container { max-width: 960px; margin: 0 auto; }
+        .cta-row { margin-top: 1rem; display: flex; gap: .75rem; }
+        .btn { background: #1f6feb; color: #fff; padding: .6rem 1rem; border-radius: .5rem; text-decoration: none; }
+        .btn.secondary { background: #30363d; }
+    </style>
+</section>
+{% endblock %}
