@@ -1,51 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Export Data</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Export Data{% endblock %}
+
+{% block content %}
     <div class="container">
-        <header>
-            <h1>Export Data</h1>
-        </header>
-        <main>
-            <section>
-                <h2>Select Export Format</h2>
-                <form action="{{ url_for('main.export_data') }}" method="post">
-                    <label for="format">Choose a format:</label>
-                    <select name="format" id="format">
-                        <option value="csv">CSV</option>
-                        <option value="json">JSON</option>
-                        <option value="xml">XML</option>
-                    </select>
-                    <button type="submit">Export</button>
-                </form>
-            </section>
-            <section>
-                <h2>Export History</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Format</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for export in exports %}
+        <h1>Export Data</h1>
+        <section>
+            <h2>Select Export Format</h2>
+            <form action="#" method="post" onsubmit="event.preventDefault(); alert('Export started (demo)');">
+                <label for="format">Choose a format:</label>
+                <select name="format" id="format">
+                    <option value="csv">CSV</option>
+                    <option value="json">JSON</option>
+                    <option value="xml">XML</option>
+                </select>
+                <button type="submit">Export</button>
+            </form>
+        </section>
+        <section>
+            <h2>Export History</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Format</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for export in exports or [] %}
                         <tr>
                             <td>{{ export.date }}</td>
                             <td>{{ export.format }}</td>
                             <td>{{ export.status }}</td>
                         </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </section>
-        </main>
+                    {% else %}
+                        <tr>
+                            <td colspan="3">No exports yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
     </div>
-</body>
-</html>
+{% endblock %}

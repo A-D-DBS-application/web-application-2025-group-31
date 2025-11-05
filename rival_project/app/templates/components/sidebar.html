@@ -1,9 +1,17 @@
 <div class="sidebar">
     <h2>Navigation</h2>
-    <ul>
+    <ul class="menu">
         <li><a href="{{ url_for('main.index') }}">Home</a></li>
         <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-        <li><a href="{{ url_for('main.company_detail') }}">Company Details</a></li>
+
+        <li class="has-submenu">
+            <button class="submenu-toggle" aria-expanded="false">Companies</button>
+            <ul class="submenu" hidden>
+                <li><a href="{{ url_for('main.company_detail', company_id=1) }}">Company 1</a></li>
+                <li><a href="{{ url_for('main.company_detail', company_id=2) }}">Company 2</a></li>
+            </ul>
+        </li>
+
         <li><a href="{{ url_for('main.compare') }}">Compare</a></li>
         <li><a href="{{ url_for('main.trends') }}">Trends</a></li>
         <li><a href="{{ url_for('main.watchlist') }}">Watchlist</a></li>
@@ -24,18 +32,20 @@
         font-size: 1.5em;
         margin-bottom: 15px;
     }
-    .sidebar ul {
+    .sidebar .menu {
         list-style-type: none;
         padding: 0;
     }
-    .sidebar ul li {
+    .sidebar .menu li {
         margin: 10px 0;
     }
-    .sidebar ul li a {
+    .sidebar .menu li a {
         text-decoration: none;
         color: #007bff;
     }
-    .sidebar ul li a:hover {
+    .sidebar .menu li a:hover {
         text-decoration: underline;
     }
+    .submenu { margin-top: .25rem; margin-left: .5rem; }
+    .submenu-toggle { background: transparent; border: 1px solid #dee2e6; border-radius: 6px; padding: .35rem .6rem; cursor:pointer; }
 </style>

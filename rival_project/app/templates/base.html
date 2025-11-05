@@ -11,12 +11,29 @@
     <header>
         {% include 'components/navbar.html' %}
     </header>
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+
+    <div class="layout">
+        <aside class="layout-sidebar">
+            {% include 'components/sidebar.html' %}
+        </aside>
+        <main class="layout-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
     <footer>
         <p>&copy; 2025 My Application. All rights reserved.</p>
     </footer>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    {% block scripts %}{% endblock %}
+    <style>
+      .layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; min-height: calc(100vh - 140px); }
+      .layout-sidebar { background: #f8f9fa; border-right: 1px solid #e5e7eb; }
+      .layout-content { padding: 1rem; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .layout-sidebar { display: none; }
+      }
+    </style>
 </body>
 </html>

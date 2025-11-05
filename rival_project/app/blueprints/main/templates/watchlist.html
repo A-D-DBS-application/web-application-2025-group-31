@@ -1,47 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watchlist</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Watchlist{% endblock %}
+
+{% block content %}
     <div class="container">
-        <header>
-            <h1>Your Watchlist</h1>
-        </header>
-        <main>
-            <table class="watchlist-table">
-                <thead>
-                    <tr>
-                        <th>Company Name</th>
-                        <th>Details</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in watchlist %}
+        <h1>Your Watchlist</h1>
+        <table class="watchlist-table">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Details</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in watchlist or [] %}
                     <tr>
                         <td>{{ item.company_name }}</td>
                         <td><a href="{{ url_for('main.company_detail', company_id=item.id) }}">View Details</a></td>
                         <td>
-                            <form action="{{ url_for('main.remove_from_watchlist', company_id=item.id) }}" method="POST">
-                                <button type="submit">Remove</button>
-                            </form>
+                            <button type="button" disabled title="Not implemented">Remove</button>
                         </td>
                     </tr>
-                    {% else %}
+                {% else %}
                     <tr>
                         <td colspan="3">Your watchlist is empty.</td>
                     </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </main>
-        <footer>
-            <p>&copy; 2025 Your Company Name</p>
-        </footer>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</body>
-</html>
+{% endblock %}

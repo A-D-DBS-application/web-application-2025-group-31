@@ -1,6 +1,6 @@
 from flask import render_template, Blueprint
 
-bp = Blueprint('main', __name__)
+bp = Blueprint('main', __name__, template_folder='templates')
 
 @bp.route('/')
 def index():

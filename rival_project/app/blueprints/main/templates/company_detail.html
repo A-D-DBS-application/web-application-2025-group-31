@@ -1,24 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Detail</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Company {{ company_id }}{% endblock %}
+
+{% block content %}
     <div class="container">
-        <h1>{{ company.name }}</h1>
+        <h1>Company #{{ company_id }}</h1>
         <div class="company-info">
-            <p><strong>Description:</strong> {{ company.description }}</p>
-            <p><strong>Founded:</strong> {{ company.founded }}</p>
-            <p><strong>Location:</strong> {{ company.location }}</p>
-            <p><strong>Website:</strong> <a href="{{ company.website }}" target="_blank">{{ company.website }}</a></p>
+            <p><strong>Description:</strong> Demo company for ID {{ company_id }}.</p>
+            <p><strong>Founded:</strong> —</p>
+            <p><strong>Location:</strong> —</p>
+            <p><strong>Website:</strong> —</p>
         </div>
         <div class="actions">
-            <a href="{{ url_for('main.index') }}" class="btn">Back to Dashboard</a>
-            <a href="{{ url_for('main.compare', company_id=company.id) }}" class="btn">Compare</a>
+            <a href="{{ url_for('main.index') }}" class="btn">Back to Home</a>
+            <a href="{{ url_for('main.compare') }}" class="btn">Compare</a>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}

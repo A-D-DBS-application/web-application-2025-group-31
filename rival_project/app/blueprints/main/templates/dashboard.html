@@ -1,54 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
     <div class="container">
-        <header>
-            <h1>Dashboard</h1>
-            <nav>
-                <ul>
-                    <li><a href="{{ url_for('main.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('main.watchlist') }}">Watchlist</a></li>
-                    <li><a href="{{ url_for('main.settings') }}">Settings</a></li>
-                    <li><a href="{{ url_for('main.logout') }}">Logout</a></li>
-                </ul>
-            </nav>
-        </header>
-        <main>
-            <section class="stats">
-                <h2>Your Statistics</h2>
-                <div class="stat-item">
-                    <h3>Total Companies</h3>
-                    <p>{{ total_companies }}</p>
-                </div>
-                <div class="stat-item">
-                    <h3>Active Alerts</h3>
-                    <p>{{ active_alerts }}</p>
-                </div>
-                <div class="stat-item">
-                    <h3>Recent Activities</h3>
-                    <p>{{ recent_activities }}</p>
-                </div>
-            </section>
-            <section class="recent-activities">
-                <h2>Recent Activities</h2>
-                <ul>
-                    {% for activity in activities %}
-                        <li>{{ activity }}</li>
-                    {% endfor %}
-                </ul>
-            </section>
-        </main>
-        <footer>
-            <p>&copy; 2025 Your Company Name. All rights reserved.</p>
-        </footer>
+        <h1>Dashboard</h1>
+        <section class="stats">
+            <h2>Your Statistics</h2>
+            <div class="stat-item">
+                <h3>Total Companies</h3>
+                <p>{{ total_companies or 0 }}</p>
+            </div>
+            <div class="stat-item">
+                <h3>Active Alerts</h3>
+                <p>{{ active_alerts or 0 }}</p>
+            </div>
+            <div class="stat-item">
+                <h3>Recent Activities</h3>
+                <p>{{ recent_activities or 0 }}</p>
+            </div>
+        </section>
+        <section class="recent-activities">
+            <h2>Recent Activities</h2>
+            <ul>
+                {% for activity in activities or [] %}
+                    <li>{{ activity }}</li>
+                {% else %}
+                    <li>No recent activity.</li>
+                {% endfor %}
+            </ul>
+        </section>
     </div>
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-</body>
-</html>
+{% endblock %}
+
+{% block scripts %}
+    {# Load Chart.js only if the chart canvas exists #}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('userGrowthChart');
+            if (!canvas) return;
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = () => {
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, { type: 'line', data: { labels: ['Jan','Feb','Mar'], datasets: [{ label: 'Users', data: [1,2,3]}] }});
+            };
+            document.body.appendChild(script);
+        });
+    </script>
+{% endblock %}
