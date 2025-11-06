@@ -10,7 +10,9 @@
         <p>Plak een bedrijfs-URL en krijg onmiddellijk een baseline report.</p>
         <div class="cta-row">
             <a class="btn" href="{{ url_for('main.dashboard') }}">Ga naar Dashboard</a>
+            {% if not session.get('user_id') %}
             <a class="btn secondary" href="{{ url_for('auth.login') }}">Log in om te starten</a>
+            {% endif %}
         </div>
     </div>
 </section>

@@ -80,6 +80,14 @@ a:hover { text-decoration: underline; }
 .btn.secondary { background:#203a67; }
 .btn.secondary:hover { background:#1a3056; }
 
+/* Alerts */
+.flash-container{ margin-bottom: 1rem; }
+.alert{ padding:.6rem .8rem; border-radius:10px; border:1px solid var(--border); background:#0f2540; color:var(--text); margin:.4rem 0; }
+.alert-success{ border-color: #234d2f; background: rgba(46,160,67,.15); }
+.alert-warning{ border-color: #6d5a23; background: rgba(242,204,96,.15); }
+.alert-danger{ border-color: #6a2a1f; background: rgba(247,129,102,.15); }
+.alert-info{ border-color: #1c355a; background: rgba(143,179,255,.12); }
+
 /* Hero */
 .hero { padding: 3rem 1rem; }
 .hero .cta-row{ margin-top:1rem; display:flex; gap:.75rem; flex-wrap:wrap; }

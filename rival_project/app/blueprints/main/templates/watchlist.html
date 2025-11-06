@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Watchlist{% endblock %}
+{% block title %}Watchlist | Rival.com{% endblock %}
 
 {% block content %}
     <div class="container">
@@ -17,7 +17,7 @@
             <h2>Ontdek vergelijkbare bedrijven</h2>
             <p>Suggesties voor verwante concurrenten.</p>
         </section>
-        <table class="watchlist-table">
+    <table class="watchlist-table">
             <thead>
                 <tr>
                     <th>Company Name</th>
@@ -26,19 +26,23 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in watchlist or [] %}
+                {% if items %}
+                    {% for item in items %}
                     <tr>
-                        <td>{{ item.company_name }}</td>
-                        <td><a href="{{ url_for('main.company_detail', company_id=item.id) }}">View Details</a></td>
+                        <td>{{ item.company.name }}</td>
+                        <td><a href="{{ url_for('main.company_detail', company_id=item.company.id) }}">View Details</a></td>
                         <td>
-                            <button type="button" disabled title="Not implemented">Remove</button>
+                            <form method="post" action="{{ url_for('main.watchlist_remove', item_id=item.id) }}">
+                                <button class="btn secondary" type="submit">Remove</button>
+                            </form>
                         </td>
                     </tr>
-                        {% else %}
+                    {% endfor %}
+                {% else %}
                     <tr>
                         <td colspan="3">Your watchlist is empty.</td>
                     </tr>
-                {% endfor %}
+                {% endif %}
             </tbody>
         </table>
     </div>

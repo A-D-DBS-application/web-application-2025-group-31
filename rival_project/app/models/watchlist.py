@@ -1,16 +1,14 @@
-class Watchlist:
-    def __init__(self):
-        self.items = []
+from app.extensions import db
 
-    def add_item(self, item):
-        self.items.append(item)
 
-    def remove_item(self, item):
-        if item in self.items:
-            self.items.remove(item)
+class Watchlist(db.Model):
+    __tablename__ = 'watchlist'
 
-    def get_items(self):
-        return self.items
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
 
-    def clear_watchlist(self):
-        self.items.clear()
+    user = db.relationship('User', backref=db.backref('watchlist_items', cascade='all, delete-orphan'))
+    company = db.relationship('Company')
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'company_id', name='uq_user_company'),)

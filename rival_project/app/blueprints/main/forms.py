@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Length, Email, EqualTo
+from wtforms.validators import DataRequired, Length, Email, EqualTo, URL, Optional
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -19,3 +19,8 @@ class FeedbackForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     message = TextAreaField('Message', validators=[DataRequired()])
     submit = SubmitField('Send Feedback')
+
+class CompanyForm(FlaskForm):
+    name = StringField('Company name', validators=[DataRequired(), Length(max=200)])
+    url = StringField('Website URL', validators=[Optional(), URL(require_tld=False, message='Invalid URL')])
+    submit = SubmitField('Add Company')

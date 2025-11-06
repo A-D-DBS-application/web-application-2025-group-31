@@ -3,14 +3,7 @@
     <ul class="menu">
         <li><a href="{{ url_for('main.index') }}">Home</a></li>
         <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-
-        <li class="has-submenu">
-            <button class="submenu-toggle" aria-expanded="false">Companies</button>
-            <ul class="submenu" hidden>
-                <li><a href="{{ url_for('main.company_detail', company_id=1) }}">Company 1</a></li>
-                <li><a href="{{ url_for('main.company_detail', company_id=2) }}">Company 2</a></li>
-            </ul>
-        </li>
+        <li><a href="{{ url_for('main.companies') }}">Companies</a></li>
 
         <li><a href="{{ url_for('main.compare') }}">Compare</a></li>
         <li><a href="{{ url_for('main.trends') }}">Trends</a></li>

@@ -7,7 +7,11 @@
             <li class="nav-item"><a href="{{ url_for('main.dashboard') }}" class="nav-link">Dashboard</a></li>
             <li class="nav-item"><a href="{{ url_for('main.watchlist') }}" class="nav-link">Watchlist</a></li>
             <li class="nav-item"><a href="{{ url_for('main.settings') }}" class="nav-link">Settings</a></li>
+            {% if session.get('user_id') %}
+            <li class="nav-item"><a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a></li>
+            {% else %}
             <li class="nav-item"><a href="{{ url_for('auth.login') }}" class="nav-link">Login</a></li>
+            {% endif %}
         </ul>
     </div>
 </nav>

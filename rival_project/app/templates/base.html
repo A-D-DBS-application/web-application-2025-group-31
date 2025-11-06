@@ -18,6 +18,15 @@
             {% include 'components/sidebar.html' %}
         </aside>
         <main class="layout-content">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                <div class="flash-container">
+                                    {% for category, message in messages %}
+                                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
             {% block content %}{% endblock %}
         </main>
     </div>
