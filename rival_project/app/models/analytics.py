@@ -20,7 +20,7 @@ class Metric(db.Model):
     __tablename__ = 'metric'
 
     metric_id = db.Column(db.BigInteger, primary_key=True)
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete="CASCADE"))
+    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
     name = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
     tracking_frequency = db.Column(db.Text)
@@ -41,7 +41,7 @@ class Report(db.Model):
     generated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     summary = db.Column(db.Text)
     user_id = db.Column(db.BigInteger, db.ForeignKey('app_user.user_id', ondelete="SET NULL"))
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete="CASCADE"))
+    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
 
     user = db.relationship('AppUser', back_populates='reports')
     company = db.relationship('Company')
@@ -57,7 +57,7 @@ class AuditLog(db.Model):
     source_name = db.Column(db.Text)
     source_url = db.Column(db.Text)
     retrieved_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete="CASCADE"))
+    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
 
     company = db.relationship('Company')
 
@@ -72,7 +72,7 @@ class ChangeEvent(db.Model):
     event_type = db.Column(db.Text)
     description = db.Column(db.Text)
     detected_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id', ondelete="CASCADE"))
+    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
 
     company = db.relationship('Company')
 

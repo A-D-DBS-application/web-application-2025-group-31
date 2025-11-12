@@ -6,7 +6,7 @@ class CompanyFinance(db.Model):
     __tablename__ = 'company_finance'
 
     id = db.Column(db.Integer, primary_key=True)
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), unique=True, nullable=False)
+    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id'), unique=True, nullable=False)
     ticker = db.Column(db.String(20), nullable=True)
     currency = db.Column(db.String(10), nullable=True)
     price = db.Column(db.Float, nullable=True)

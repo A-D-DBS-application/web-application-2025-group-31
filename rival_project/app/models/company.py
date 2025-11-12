@@ -3,15 +3,21 @@ from app.extensions import db
 
 
 class Company(db.Model):
-    __tablename__ = 'companies'
+    __tablename__ = 'company'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    url = db.Column(db.String(500), nullable=True)
-    industry = db.Column(db.String(120), nullable=True)
-    location = db.Column(db.String(200), nullable=True)
-    description = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Map to existing 'company' table columns while keeping property names stable
+    id = db.Column('company_id', db.BigInteger, primary_key=True)
+    name = db.Column(db.Text, nullable=False)
+    # our property 'url' stores in legacy column 'website_url'
+    url = db.Column('website_url', db.Text, nullable=True)
+    # our property 'location' maps to 'headquarters'
+    location = db.Column('headquarters', db.Text, nullable=True)
+    # optional fields present in 'company' table
+    team_size = db.Column(db.Integer, nullable=True)
+    funding = db.Column(db.Numeric, nullable=True)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+
+    # Drop fields not present in 'company' table (industry, description) to avoid schema mismatches
 
     def __repr__(self):
         return f"<Company {self.name}>"
