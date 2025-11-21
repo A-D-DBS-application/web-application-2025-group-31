@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | Rival</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="center-layout fade-in">
+    <div class="auth-card soft-shadow">
+        <h1 class="main-title">Log in bij <span class="rival-text">Rival</span></h1>
+        <p class="subtitle">Toegang tot je dashboard voor concurrentie-analyse en bedrijfsinzichten.</p>
+
+        <form method="POST" class="auth-form">
+            <label>E-mailadres</label>
+            <input type="email" name="email" required>
+
+            <label>Wachtwoord</label>
+            <input type="password" name="password" required>
+
+            <button type="submit" class="button full">Inloggen</button>
+
+            {% if message %}
+                <p class="error">{{ message }}</p>
+            {% endif %}
+        </form>
+
+        <p class="alt-link">
+            Nog geen account? <a href="{{ url_for('main.register') }}">Maak er een aan</a>
+        </p>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

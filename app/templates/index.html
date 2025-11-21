@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rival | Competitive Intelligence Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="center-layout fade-in">
+    <div class="auth-card soft-shadow">
+        <h1 class="main-title">
+            Welkom bij <span class="rival-text">Rival</span>
+        </h1>
+        <p class="subtitle">
+            Rival helpt je om concurrentiebewegingen te volgen, marktsignalen te detecteren
+            en strategische beslissingen te onderbouwen met data.
+        </p>
+        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 8px;">
+            <a href="{{ url_for('main.login') }}" class="button full">Inloggen</a>
+            <a href="{{ url_for('main.register') }}" class="button secondary full">Account aanmaken</a>
+        </div>
+        <p class="alt-link" style="margin-top: 20px;">
+            Demo-omgeving? Log in met je eigen account en voeg een eerste bedrijf toe.
+        </p>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard | Rival</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar soft-shadow">
+        <div>
+            <h2>RIVAL</h2>
+            <div class="sidebar-tagline">Competitive intelligence</div>
+        </div>
+        <nav>
+            <a href="{{ url_for('main.dashboard') }}" class="active">
+                <span class="label">
+                    <span class="dot"></span>
+                    <span>Dashboard</span>
+                </span>
+            </a>
+            <a href="{{ url_for('main.companies') }}">
+                <span class="label">
+                    <span class="dot"></span>
+                    <span>Bedrijven</span>
+                </span>
+            </a>
+            <a href="{{ url_for('main.logout') }}">
+                <span class="label">
+                    <span class="dot"></span>
+                    <span>Uitloggen</span>
+                </span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            Rival · v0.1 · Internal demo
+        </div>
+    </aside>
+
+    <main class="content fade-in">
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1>Intelligence dashboard</h1>
+                <p class="subtitle">
+                    Analyseer nieuwe websites, volg je watchlist en bekijk recente signalen.
+                </p>
+            </div>
+        </div>
+
+        <div class="grid-3">
+            <div class="stat-card">
+                <div class="stat-label">Geanalyseerde websites</div>
+                <div class="stat-value">–</div>
+                <div class="stat-trend">Synchronisatie met Supabase nog te koppelen</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Actieve watchlist</div>
+                <div class="stat-value">{{ watchlist|length if watchlist else 0 }}</div>
+                <div class="stat-trend">Handmatige add via dashboard</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Ongelezen alerts</div>
+                <div class="stat-value">{{ alerts|length if alerts else 0 }}</div>
+                <div class="stat-trend">Mock data – kan later live worden</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <section class="card soft-shadow fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">Nieuwe websiteanalyse</h2>
+                    <div class="card-meta">Plak een URL, Rival doet de eerste scan.</div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="url-form">
+                        <input type="text" name="scrape_url" placeholder="https://voorbeeldbedrijf.nl" required>
+                        <button type="submit" class="button" style="margin-top: 10px;">Analyseren</button>
+                    </form>
+
+                    {% if scrape_result %}
+                        {% if scrape_result.error %}
+                            <p class="alert">❌ {{ scrape_result.error }}</p>
+                        {% else %}
+                            <div class="fade-in" style="margin-top: 18px;">
+                                <h3>Resultaten voor {{ scrape_result.url }}</h3>
+                                <p><strong>Titel:</strong> {{ scrape_result.title }}</p>
+                                <p><strong>Omschrijving:</strong> {{ scrape_result.description }}</p>
+                                {% if scrape_result.headings %}
+                                    <p><strong>Belangrijke H1-koppen:</strong></p>
+                                    <ul class="soft-list">
+                                        {% for h in scrape_result.headings %}
+                                            <li>{{ h }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="card card-muted soft-shadow fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">Watchlist</h2>
+                    <div class="card-meta">Overzicht van handmatig gevolgde websites.</div>
+                </div>
+                <div class="card-body">
+                    {% if watchlist %}
+                        <ul class="soft-list">
+                            {% for item in watchlist %}
+                                <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="subtitle">Er zijn nog geen bedrijven toegevoegd aan je watchlist.</p>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+
+        <section class="card card-muted soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Recente meldingen</h2>
+                <div class="card-meta">Mock alerts – later te koppelen aan change events.</div>
+            </div>
+            <div class="card-body">
+                {% if alerts %}
+                    {% for alert in alerts %}
+                        <div class="alert">{{ alert }}</div>
+                    {% endfor %}
+                {% else %}
+                    <p class="subtitle">Geen nieuwe meldingen.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
