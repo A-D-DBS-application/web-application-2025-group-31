@@ -19,6 +19,12 @@
                     <span>Dashboard</span>
                 </span>
             </a>
+            <a href="{{ url_for('main.watchlist') }}">
+                <span class="label">
+                    <span class="dot"></span>
+                    <span>Watchlist</span>
+                </span>
+            </a>
             <a href="{{ url_for('main.companies') }}">
                 <span class="label">
                     <span class="dot"></span>
@@ -73,6 +79,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" class="url-form">
+                        <input type="hidden" name="form_type" value="scrape" />
                         <input type="text" name="scrape_url" placeholder="https://voorbeeldbedrijf.nl" required>
                         <button type="submit" class="button" style="margin-top: 10px;">Analyseren</button>
                     </form>
@@ -111,12 +118,60 @@
                                 <li>{{ item }}</li>
                             {% endfor %}
                         </ul>
+                        {% if metrics_selected %}
+                            <p style="margin-top:8px;"><strong>Geselecteerde metrics:</strong> {{ metrics_selected|join(', ') }}</p>
+                        {% endif %}
                     {% else %}
                         <p class="subtitle">Er zijn nog geen bedrijven toegevoegd aan je watchlist.</p>
                     {% endif %}
                 </div>
             </section>
         </div>
+
+        <section class="card soft-shadow fade-in" style="margin-top:20px;">
+            <div class="card-header">
+                <h2 class="card-title">Configureer watchlist</h2>
+                <div class="card-meta">Selecteer bedrijven en welke metrics je wil volgen.</div>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="watchlist-config-form">
+                    <input type="hidden" name="form_type" value="watchlist_config" />
+                    <div class="grid-2">
+                        <div>
+                            <h3 style="margin-top:0;">Bedrijven</h3>
+                            {% if companies %}
+                                <ul class="soft-list" style="max-height:180px; overflow:auto;">
+                                    {% for c in companies %}
+                                        <li>
+                                            <label style="display:flex; gap:6px; align-items:center; font-size:14px;">
+                                                <input type="checkbox" name="companies" value="{{ c.company_id }}" {% if c.company_id in session.get('watchlist_companies', []) %}checked{% endif %}>
+                                                <span>{{ c.name }}</span>
+                                            </label>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="subtitle">Nog geen bedrijven beschikbaar.</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h3 style="margin-top:0;">Metrics</h3>
+                            <ul class="soft-list" style="max-height:180px; overflow:auto;">
+                                {% for m in metric_options %}
+                                    <li>
+                                        <label style="display:flex; gap:6px; align-items:center; font-size:14px;">
+                                            <input type="checkbox" name="metrics" value="{{ m }}" {% if m in metrics_selected %}checked{% endif %}>
+                                            <span>{{ m }}</span>
+                                        </label>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <button type="submit" class="button" style="margin-top:12px;">Watchlist opslaan</button>
+                </form>
+            </div>
+        </section>
 
         <section class="card card-muted soft-shadow fade-in">
             <div class="card-header">

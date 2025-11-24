@@ -9,7 +9,7 @@ De MVP werd ontwikkeld als proof of concept binnen het vak *Application Developm
 
 ---
 
-## 🧩 Overzicht
+## Overzicht
 
 **Doel:**  
 Rival automatiseert bedrijfsanalyse door informatie over websites, bedrijven en concurrenten te verzamelen.  
@@ -22,7 +22,7 @@ Gebruikers kunnen:
 
 ---
 
-## 🧠 Belangrijkste Functionaliteiten
+## Belangrijkste Functionaliteiten
 
 | Functie | Beschrijving |
 |----------|---------------|

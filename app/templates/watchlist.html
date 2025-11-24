@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Watchlist vergelijking | Rival</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar soft-shadow">
+        <div>
+            <h2>RIVAL</h2>
+            <div class="sidebar-tagline">Competitive intelligence</div>
+        </div>
+        <nav>
+            <a href="{{ url_for('main.dashboard') }}">
+                <span class="label"><span class="dot"></span><span>Dashboard</span></span>
+            </a>
+            <a href="{{ url_for('main.watchlist') }}" class="active">
+                <span class="label"><span class="dot"></span><span>Watchlist</span></span>
+            </a>
+            <a href="{{ url_for('main.companies') }}">
+                <span class="label"><span class="dot"></span><span>Bedrijven</span></span>
+            </a>
+            <a href="{{ url_for('main.logout') }}">
+                <span class="label"><span class="dot"></span><span>Uitloggen</span></span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">Vergelijking actief</div>
+    </aside>
+
+    <main class="content fade-in">
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1>Watchlist vergelijking</h1>
+                <p class="subtitle">Geselecteerde bedrijven tegenover gekozen metrics.</p>
+            </div>
+        </div>
+
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Vergelijkingstabel</h2>
+                <div class="card-meta">Toont eenvoudige waarden of '–' wanneer onbekend.</div>
+            </div>
+            <div class="card-body">
+                {% if not companies %}
+                    <p class="subtitle">Nog geen bedrijven in watchlist.</p>
+                {% elif not metrics %}
+                    <p class="subtitle">Geen metrics geselecteerd (configureer op Dashboard).</p>
+                {% else %}
+                    <div style="overflow-x:auto;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Bedrijf</th>
+                                    {% for m in metrics %}<th>{{ m }}</th>{% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in rows %}
+                                    <tr>
+                                        <td>{{ row.company.name }}</td>
+                                        {% for m in metrics %}
+                                            <td>{{ row.metrics[m] }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

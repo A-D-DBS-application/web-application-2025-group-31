@@ -19,6 +19,12 @@
                     <span>Dashboard</span>
                 </span>
             </a>
+            <a href="{{ url_for('main.watchlist') }}">
+                <span class="label">
+                    <span class="dot"></span>
+                    <span>Watchlist</span>
+                </span>
+            </a>
             <a href="{{ url_for('main.companies') }}" class="active">
                 <span class="label">
                     <span class="dot"></span>
@@ -58,6 +64,7 @@
             </div>
             <div class="card-body">
                 <form method="POST" class="auth-form">
+                    <input type="hidden" name="form_type" value="add_company" />
                     <label>Naam *</label>
                     <input type="text" name="name" required>
 
@@ -94,6 +101,7 @@
                                     <th>Hoofdkantoor</th>
                                     <th>Team</th>
                                     <th>Funding</th>
+                                    <th>Acties</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -115,6 +123,13 @@
                                             {% else %}
                                                 –
                                             {% endif %}
+                                        </td>
+                                        <td>
+                                            <form method="POST" style="display:inline;">
+                                                <input type="hidden" name="form_type" value="add_to_watchlist" />
+                                                <input type="hidden" name="company_id" value="{{ c.company_id }}" />
+                                                <button class="button" style="padding:4px 8px; font-size:12px;">Watchlist</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 {% endfor %}
