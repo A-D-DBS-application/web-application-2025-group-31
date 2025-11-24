@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, Response, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from app.models import AppUser, Company, Metric
+from app.models import AppUser, Company, Metric, AuditLog
+import csv
+import io
 from app.scraper import scrape_website
 
 bp = Blueprint('main', __name__)
@@ -122,9 +124,17 @@ def dashboard():
                         new_company = Company(
                             name=scrape_result['title'] or 'Onbekend bedrijf',
                             website_url=url,
-                            headquarters='Onbekend'
+                            headquarters=scrape_result.get('headquarters') or 'Onbekend',
+                            team_size=scrape_result.get('team_size'),
+                            funding=scrape_result.get('funding')
                         )
                         db.session.add(new_company)
+                        db.session.flush()
+                        db.session.add(AuditLog(
+                            company_id=new_company.company_id,
+                            source_name='Scraper',
+                            source_url=url
+                        ))
                         db.session.commit()
 
     # Ophalen watchlist vanuit sessie
@@ -174,7 +184,13 @@ def watchlist():
             metric_values[m] = metric_obj.value if metric_obj and metric_obj.value is not None else '–'
         comparison_rows.append({'company': c, 'metrics': metric_values})
 
-    return render_template('watchlist.html', metrics=metrics_selected, rows=comparison_rows, companies=companies)
+    # Audit logs per company
+    logs_by_company = {}
+    if companies:
+        for c in companies:
+            logs_by_company[c.company_id] = AuditLog.query.filter_by(company_id=c.company_id).order_by(AuditLog.retrieved_at.desc()).all()
+
+    return render_template('watchlist.html', metrics=metrics_selected, rows=comparison_rows, companies=companies, logs_by_company=logs_by_company)
 
 
 # ============================
@@ -205,6 +221,12 @@ def companies():
                     funding=funding or None
                 )
                 db.session.add(new_company)
+                db.session.flush()
+                db.session.add(AuditLog(
+                    company_id=new_company.company_id,
+                    source_name='Manual Entry',
+                    source_url=website_url or '—'
+                ))
                 db.session.commit()
                 message = f"✅ {name} toegevoegd!"
             except Exception as e:
@@ -223,6 +245,54 @@ def companies():
 
     companies = Company.query.all()
     return render_template('companies.html', companies=companies, message=message)
+
+
+# ============================
+# EXPORT AUDIT LOGS (Watchlist)
+# ============================
+@bp.route('/watchlist/audit/export')
+def export_watchlist_audit():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    fmt = request.args.get('format', 'csv').lower()
+    company_ids = session.get('watchlist_companies', [])
+    if not company_ids:
+        if fmt == 'json':
+            return jsonify([])
+        return Response('', mimetype='text/csv', headers={'Content-Disposition': 'attachment; filename=audit_logs.csv'})
+
+    logs = AuditLog.query.filter(AuditLog.company_id.in_(company_ids)).order_by(AuditLog.retrieved_at.desc()).all()
+    company_map = {c.company_id: c.name for c in Company.query.filter(Company.company_id.in_(company_ids)).all()}
+
+    if fmt == 'json':
+        payload = [
+            {
+                'company_id': l.company_id,
+                'company_name': company_map.get(l.company_id, ''),
+                'source_name': l.source_name,
+                'source_url': l.source_url,
+                'retrieved_at': l.retrieved_at.isoformat() if l.retrieved_at else None
+            }
+            for l in logs
+        ]
+        return jsonify(payload)
+
+    # CSV export
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['company_id', 'company_name', 'source_name', 'source_url', 'retrieved_at'])
+    for l in logs:
+        writer.writerow([
+            l.company_id,
+            company_map.get(l.company_id, ''),
+            l.source_name,
+            l.source_url,
+            l.retrieved_at.isoformat() if l.retrieved_at else ''
+        ])
+    csv_data = output.getvalue()
+    output.close()
+    return Response(csv_data, mimetype='text/csv', headers={'Content-Disposition': 'attachment; filename=audit_logs.csv'})
 
 
 # ============================

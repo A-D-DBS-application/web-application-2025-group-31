@@ -68,6 +68,31 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="card-meta" style="margin-top:1rem;">
+                        <strong>Audit bronnen per bedrijf:</strong>
+                    </div>
+                    <ul class="subtitle" style="list-style:disc; padding-left:1.2rem;">
+                        {% for c in companies %}
+                            <li>
+                                <strong>{{ c.name }}:</strong>
+                                {% set logs = logs_by_company.get(c.company_id, []) %}
+                                {% if logs %}
+                                    {% for l in logs %}
+                                        <span style="display:inline-block; margin-right:0.5rem;">
+                                            {{ l.source_name }} ({{ l.retrieved_at.strftime('%Y-%m-%d') if l.retrieved_at else 'n/a' }})
+                                            {% if l.source_url %}<a href="{{ l.source_url }}" target="_blank">↗</a>{% endif %}
+                                        </span>
+                                    {% endfor %}
+                                {% else %}
+                                    <em>Geen logs</em>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div style="margin-top:1rem;">
+                        <a class="button" href="{{ url_for('main.export_watchlist_audit') }}?format=csv">Export CSV</a>
+                        <a class="button" href="{{ url_for('main.export_watchlist_audit') }}?format=json">Export JSON</a>
+                    </div>
                 {% endif %}
             </div>
         </section>
