@@ -161,6 +161,11 @@ def watchlist():
         return redirect(url_for('main.login'))
 
     company_ids = session.get('watchlist_companies', [])
+    # Cast ids to int to avoid Postgres bigint=text errors
+    try:
+        company_ids = [int(cid) for cid in company_ids]
+    except Exception:
+        company_ids = []
     metrics_selected = session.get('watchlist_metrics', [])
 
     companies = Company.query.filter(Company.company_id.in_(company_ids)).all() if company_ids else []
