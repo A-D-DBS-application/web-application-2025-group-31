@@ -165,6 +165,11 @@ def watchlist():
         return redirect(url_for('main.login'))
 
     company_ids = session.get('watchlist_companies', [])
+    # Cast ids to int to avoid Postgres bigint=text errors
+    try:
+        company_ids = [int(cid) for cid in company_ids]
+    except Exception:
+        company_ids = []
     metrics_selected = session.get('watchlist_metrics', [])
 
     companies = Company.query.filter(Company.company_id.in_(company_ids)).all() if company_ids else []
@@ -180,11 +185,14 @@ def watchlist():
             metric_values[m] = metric_obj.value if metric_obj else '–'
         comparison_rows.append({'company': c, 'metrics': metric_values})
 
-    logs_by_company = {
-        c.company_id: AuditLog.query.filter_by(company_id=c.company_id)
-        .order_by(AuditLog.retrieved_at.desc()).all()
-        for c in companies
-    }
+    try:
+        logs_by_company = {
+            c.company_id: AuditLog.query.filter_by(company_id=c.company_id)
+            .order_by(AuditLog.retrieved_at.desc()).all()
+            for c in companies
+        }
+    except Exception:
+        logs_by_company = {c.company_id: [] for c in companies}
 
     return render_template(
         'watchlist.html',
