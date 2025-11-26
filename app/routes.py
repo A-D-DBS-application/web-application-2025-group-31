@@ -85,12 +85,9 @@ def dashboard():
 
     scrape_result = None
 
-<<<<<<< Updated upstream
-=======
     user = AppUser.query.get(session["user_id"])
 
     # Bepaal welke actie de POST is (scrape vs configuratie watchlist)
->>>>>>> Stashed changes
     if request.method == 'POST':
         form_type = request.form.get('form_type')
 
@@ -252,9 +249,6 @@ def companies():
     companies = Company.query.all()
     return render_template('companies.html', companies=companies, message=message)
 
-
-<<<<<<< Updated upstream
-=======
 # ============================
 # SCRAPE PAGE
 # ============================
@@ -319,4 +313,4 @@ def update_weekly_mail():
 
 
 
->>>>>>> Stashed changes
+

@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
@@ -71,15 +71,11 @@
             <div class="stat-card">
                 <div class="stat-label">Ongelezen alerts</div>
                 <div class="stat-value">{{ alerts|length if alerts else 0 }}</div>
-<<<<<<< Updated upstream
                 <div class="stat-trend">Mock data</div>
-=======
-                <div class="stat-trend">Mock data – later live</div>
->>>>>>> Stashed changes
             </div>
         </div>
 
-        <!-- SCRAPING + WATCHLIST OVERVIEW -->
+        <!-- SCRAPE + WATCHLIST -->
         <div class="grid-2">
 
             <!-- SCRAPE SECTION -->
@@ -159,15 +155,11 @@
                 </div>
             </section>
 
-            <!-- WATCHLIST -->
+            <!-- WATCHLIST OVERVIEW -->
             <section class="card card-muted soft-shadow fade-in">
                 <div class="card-header">
                     <h2 class="card-title">Watchlist</h2>
-<<<<<<< Updated upstream
                     <div class="card-meta">Overzicht van je gevolgde bedrijven.</div>
-=======
-                    <div class="card-meta">Overzicht van gevolgde websites</div>
->>>>>>> Stashed changes
                 </div>
 
                 <div class="card-body">
@@ -177,17 +169,8 @@
                                 <li>{{ item }}</li>
                             {% endfor %}
                         </ul>
-<<<<<<< Updated upstream
                     {% else %}
                         <p class="subtitle">Nog geen bedrijven in watchlist.</p>
-=======
-
-                        {% if metrics_selected %}
-                            <p><strong>Geselecteerde metrics:</strong> {{ metrics_selected|join(', ') }}</p>
-                        {% endif %}
-                    {% else %}
-                        <p class="subtitle">Je hebt nog geen watchlist-items.</p>
->>>>>>> Stashed changes
                     {% endif %}
                 </div>
             </section>
@@ -198,20 +181,12 @@
         <section class="card soft-shadow fade-in" style="margin-top:20px;">
             <div class="card-header">
                 <h2 class="card-title">Configureer watchlist</h2>
-<<<<<<< Updated upstream
                 <div class="card-meta">Selecteer bedrijven en metrics.</div>
             </div>
 
             <div class="card-body">
 
                 <form method="POST">
-=======
-                <div class="card-meta">Selecteer bedrijven & metrics</div>
-            </div>
-
-            <div class="card-body">
-                <form method="POST" class="watchlist-config-form">
->>>>>>> Stashed changes
                     <input type="hidden" name="form_type" value="watchlist_config">
 
                     <div class="grid-2">
@@ -219,17 +194,6 @@
                         <!-- BEDRIJVEN -->
                         <div>
                             <h3>Bedrijven</h3>
-<<<<<<< Updated upstream
-                            <ul class="soft-list" style="max-height:180px; overflow:auto;">
-                                {% for c in companies %}
-                                    <li>
-                                        <label>
-                                            <input type="checkbox" name="companies" value="{{ c.company_id }}"
-                                                {% if c.company_id in session.get('watchlist_companies', []) %}checked{% endif %}>
-                                            {{ c.name }}
-                                        </label>
-                                    </li>
-=======
                             <ul class="soft-list" style="max-height:180px; overflow:auto;">
                                 {% for c in companies %}
                                 <li>
@@ -243,6 +207,7 @@
                             </ul>
                         </div>
 
+                        <!-- METRICS -->
                         <div>
                             <h3>Metrics</h3>
                             <ul class="soft-list" style="max-height:180px; overflow:auto;">
@@ -254,34 +219,13 @@
                                         {{ m }}
                                     </label>
                                 </li>
->>>>>>> Stashed changes
-                                {% endfor %}
-                            </ul>
-                        </div>
-
-                        <!-- METRICS -->
-                        <div>
-                            <h3>Metrics</h3>
-                            <ul class="soft-list">
-                                {% for m in metric_options %}
-                                    <li>
-                                        <label>
-                                            <input type="checkbox" name="metrics" value="{{ m }}"
-                                                {% if m in metrics_selected %}checked{% endif %}>
-                                            {{ m }}
-                                        </label>
-                                    </li>
                                 {% endfor %}
                             </ul>
                         </div>
 
                     </div>
 
-<<<<<<< Updated upstream
-                    <button class="button" style="margin-top:12px;">Watchlist opslaan</button>
-=======
                     <button type="submit" class="button" style="margin-top:10px;">Opslaan</button>
->>>>>>> Stashed changes
                 </form>
 
             </div>
@@ -291,10 +235,7 @@
         <section class="card card-muted soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Recente meldingen</h2>
-<<<<<<< Updated upstream
-=======
                 <div class="card-meta">Mock data</div>
->>>>>>> Stashed changes
             </div>
 
             <div class="card-body">
@@ -312,27 +253,4 @@
 </div>
 </body>
 </html>
-<<<<<<< Updated upstream
-=======
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
->>>>>>> Stashed changes
