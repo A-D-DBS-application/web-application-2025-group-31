@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ company.name }} | Baseline Report</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<div class="layout">
+
+    <aside class="sidebar soft-shadow">
+        <div>
+            <h2>RIVAL</h2>
+            <div class="sidebar-tagline">Competitive intelligence</div>
+        </div>
+
+        <nav>
+            <a href="{{ url_for('main.dashboard') }}">
+                <span class="label"><span class="dot"></span><span>Dashboard</span></span>
+            </a>
+            <a href="{{ url_for('main.watchlist') }}">
+                <span class="label"><span class="dot"></span><span>Watchlist</span></span>
+            </a>
+            <a href="{{ url_for('main.companies') }}" class="active">
+                <span class="label"><span class="dot"></span><span>Bedrijven</span></span>
+            </a>
+            <a href="{{ url_for('main.logout') }}">
+                <span class="label"><span class="dot"></span><span>Uitloggen</span></span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">Rival · Baseline Report</div>
+    </aside>
+
+    <main class="content fade-in">
+
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1>{{ company.name }}</h1>
+                <p class="subtitle">Volledig baseline-overzicht van alle fundamentals.</p>
+            </div>
+        </div>
+
+        <a href="{{ url_for('main.companies') }}" class="button" style="margin-bottom:14px;">← Terug naar bedrijven</a>
+
+        <section class="card soft-shadow fade-in">
+
+            <div class="card-header">
+                <h2 class="card-title">Baseline Report</h2>
+                <div class="card-meta">Samengevat vanuit scraping + database</div>
+            </div>
+
+            <div class="card-body">
+                <p><strong>Website:</strong><br>
+                    {% if company.website_url %}
+                        <a href="{{ company.website_url }}" target="_blank">{{ company.website_url }}</a>
+                    {% else %}
+                        <span class="tag">Geen website</span>
+                    {% endif %}
+                </p>
+
+                <p><strong>Headquarters:</strong><br>{{ company.headquarters or "Onbekend" }}</p>
+                <p><strong>Office Locations:</strong><br>{{ company.office_locations or "Niet beschikbaar" }}</p>
+                <p><strong>Team Size:</strong><br>{{ company.team_size or "Onbekend" }}</p>
+
+                <p><strong>Total Funding:</strong><br>
+                    {% if company.funding %}
+                        €{{ '{:,.0f}'.format(company.funding) }}
+                    {% else %}
+                        Onbekend
+                    {% endif %}
+                </p>
+
+                <p><strong>Funding History:</strong><br>{{ company.funding_history or "Geen gegevens" }}</p>
+
+                <p><strong>Traction Signals:</strong><br>{{ company.traction_signals or "Geen signalen gedetecteerd" }}</p>
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+</body>
+</html>

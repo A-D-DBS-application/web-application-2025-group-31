@@ -12,6 +12,12 @@ class Company(db.Model):
     headquarters = db.Column(db.Text)
     team_size = db.Column(db.Integer)
     funding = db.Column(db.Numeric)
+
+    # ⭐ Nieuwe Baseline Report velden
+    office_locations = db.Column(db.Text)
+    funding_history = db.Column(db.Text)
+    traction_signals = db.Column(db.Text)
+
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
     # Relaties
@@ -33,10 +39,7 @@ class AppUser(db.Model):
     user_id = db.Column(db.BigInteger, primary_key=True)
     username = db.Column(db.Text, nullable=False, unique=True)
     email = db.Column(db.Text, nullable=False, unique=True)
-
-    # 🔥 Enige toegevoegde regel voor database-auth:
     password_hash = db.Column(db.Text, nullable=False)
-
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
     reports = db.relationship('Report', back_populates='user')
@@ -119,11 +122,3 @@ class ChangeEvent(db.Model):
 
     def __repr__(self):
         return f"<ChangeEvent {self.event_type}>"
-
-
-
-
-
-
-
-    
