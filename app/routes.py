@@ -85,6 +85,12 @@ def dashboard():
 
     scrape_result = None
 
+<<<<<<< Updated upstream
+=======
+    user = AppUser.query.get(session["user_id"])
+
+    # Bepaal welke actie de POST is (scrape vs configuratie watchlist)
+>>>>>>> Stashed changes
     if request.method == 'POST':
         form_type = request.form.get('form_type')
 
@@ -133,6 +139,7 @@ def dashboard():
 
     return render_template(
         'dashboard.html',
+        user=user,
         scrape_result=scrape_result,
         watchlist=watchlist_names,
         alerts=[],
@@ -246,3 +253,70 @@ def companies():
     return render_template('companies.html', companies=companies, message=message)
 
 
+<<<<<<< Updated upstream
+=======
+# ============================
+# SCRAPE PAGE
+# ============================
+@bp.route('/scrape', methods=['GET', 'POST'])
+def scrape():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    result = None
+    if request.method == 'POST':
+        url = request.form.get('url')
+        if url:
+            result = scrape_website(url)
+
+    return render_template('scrape.html', result=result)
+
+@bp.route("/weekly-mail-settings")
+def weekly_mail_settings():
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    user = AppUser.query.get(session["user_id"])
+    return render_template("weekly_mail.html", user=user)
+
+@bp.route("/update-weekly-mail", methods=["POST"])
+def update_weekly_mail():
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    user = AppUser.query.get(session["user_id"])
+    user.weekly_digest = request.form.get("digest") == "on"
+    db.session.commit()
+
+    return redirect(url_for("main.weekly_mail_settings"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> Stashed changes

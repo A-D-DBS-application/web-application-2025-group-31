@@ -44,6 +44,8 @@ class AppUser(db.Model):
 
     reports = db.relationship('Report', back_populates='user')
 
+    weekly_digest = db.Column(db.Boolean, default=False)
+    
     def __repr__(self):
         return f"<AppUser {self.username}>"
 

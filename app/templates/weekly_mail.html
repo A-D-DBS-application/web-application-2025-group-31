@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Digest Instellingen</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <div class="sidebar">
+
+        <h2>RIVAL</h2>
+        <div class="sidebar-tagline">Competitive Intelligence</div>
+
+        <nav>
+            <a href="{{ url_for('main.dashboard') }}">
+                <span class="label"><span class="dot"></span>Dashboard</span>
+            </a>
+
+            <a href="{{ url_for('main.watchlist') }}">
+                <span class="label"><span class="dot"></span>Watchlist</span>
+            </a>
+
+            <a href="{{ url_for('main.companies') }}">
+                <span class="label"><span class="dot"></span>Bedrijven</span>
+            </a>
+
+            <a href="{{ url_for('main.weekly_mail_settings') }}" class="active">
+                <span class="label"><span class="dot"></span>Newsletter</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            Rival MVP © 2025
+        </div>
+
+    </div>
+
+    <div class="content fade-in">
+
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1>Digest Instellingen</h1>
+                <div class="subtitle">Beheer je wekelijkse e-mailnotificaties</div>
+            </div>
+            <div class="topbar-right">
+                <span class="badge-soft">Ingelogd als {{ session['username'] }}</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Wekelijkse Digest</h2>
+                <span class="card-meta">E-mail notificaties</span>
+            </div>
+
+            <div class="card-body">
+                <form action="{{ url_for('main.update_weekly_mail') }}" method="POST">
+
+                    <label style="display:flex;align-items:center;gap:10px;">
+                        <input 
+                            type="checkbox" 
+                            name="digest"
+                            {% if user.weekly_digest %}checked{% endif %}
+                            style="width:18px;height:18px;"
+                        >
+                        Ontvang elke week een e-mail met competitor updates
+                    </label>
+
+                    <button type="submit" class="button" style="margin-top:15px;">
+                        Instellingen opslaan
+                    </button>
+
+                </form>
+            </div>
+        </div>
+
+
+        <!-- ========================================= -->
+        <!--    VOORBEELD NIEUWSBRIEF (PREVIEW KAART)   -->
+        <!-- ========================================= -->
+        <div class="card card-muted" style="margin-top: 24px;">
+            <div class="card-header">
+                <h2 class="card-title">Voorbeeld van wekelijkse mail</h2>
+                <div class="card-meta">Dit is een preview van wat Rival jou elke week zou sturen.</div>
+            </div>
+
+            <div class="card-body" style="line-height: 1.7;">
+
+                <p><strong>📊 Weekly Competitive Digest</strong></p>
+                <p style="color: var(--text-soft); font-size: 0.92rem;">
+                    Hier is een voorbeeld van hoe jouw wekelijkse update eruit zou zien.
+                </p>
+
+                <ul class="soft-list">
+                    <li>
+                        <strong>CompetitorOne</strong><br>
+                        • Nieuwe feature gelanceerd: “AI Analytics Dashboard”<br>
+                        • Website traffic +12% volgens SimilarWeb<br>
+                        • Hiring: 3 nieuwe engineering posities
+                    </li>
+
+                    <li>
+                        <strong>CompetitorTwo</strong><br>
+                        • Pricing update: Starter plan verhoogd van €29 → €39<br>
+                        • 1 nieuwe review op TrustPilot (4 ★)<br>
+                        • Blogpost: “Ons 2025 Product Vision”
+                    </li>
+
+                    <li>
+                        <strong>Markttrends</strong><br>
+                        • Funding: €18M Series A voor StartupX in dezelfde niche<br>
+                        • Regulatory update: EU data-compliance wijziging vanaf juni 2025
+                    </li>
+                </ul>
+
+                <p style="margin-top: 12px; color: var(--text-soft); font-size: 0.9rem;">
+                    Opmerking: dit is een demo-voorbeeld.  
+                    De echte mails tonen enkel bedrijven uit jouw watchlist.
+                </p>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
+
+
+
+
