@@ -79,7 +79,7 @@
                                 {% if logs %}
                                     {% for l in logs %}
                                         <span style="display:inline-block; margin-right:0.5rem;">
-                                            {{ l.source_name }} ({{ l.retrieved_at.strftime('%Y-%m-%d') if l.retrieved_at else 'n/a' }})
+                                            {{ l.source_name }} ({{ l.retrieved_at or 'n/a' }})
                                             {% if l.source_url %}<a href="{{ l.source_url }}" target="_blank">↗</a>{% endif %}
                                         </span>
                                     {% endfor %}
