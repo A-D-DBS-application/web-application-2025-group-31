@@ -1,6 +1,13 @@
+from dotenv import load_dotenv
+import os
+
+# Laad .env zodat OPENAI_API_KEY beschikbaar is zodra Flask start
+load_dotenv()
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from .config import Config
+
 
 db = SQLAlchemy()
 
