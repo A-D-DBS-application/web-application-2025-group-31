@@ -9,14 +9,23 @@ class Company(db.Model):
     company_id = db.Column(db.BigInteger, primary_key=True)
     name = db.Column(db.Text, nullable=False)
     website_url = db.Column(db.Text)
+
+    # Klassieke scrapingvelden
     headquarters = db.Column(db.Text)
     team_size = db.Column(db.Integer)
     funding = db.Column(db.Numeric)
-
-    # ⭐ Nieuwe Baseline Report velden
     office_locations = db.Column(db.Text)
-    funding_history = db.Column(db.Text)
     traction_signals = db.Column(db.Text)
+    funding_history = db.Column(db.Text)
+
+    # AI-baseline velden
+    ai_summary = db.Column(db.Text)                 
+    value_proposition = db.Column(db.Text)
+    product_description = db.Column(db.Text)
+    target_segment = db.Column(db.Text)
+    pricing = db.Column(db.Text)
+    key_features = db.Column(db.JSON)               # JSONB in database
+    competitors = db.Column(db.JSON)                # JSONB in database
 
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
@@ -26,8 +35,12 @@ class Company(db.Model):
     audit_logs = db.relationship('AuditLog', back_populates='company', cascade="all, delete")
     change_events = db.relationship('ChangeEvent', back_populates='company', cascade="all, delete")
 
+    # Watchlist M2M
+    watchers = db.relationship('UserWatchlist', back_populates='company', cascade="all, delete")
+
     def __repr__(self):
         return f"<Company {self.name}>"
+
 
 
 # ======================================
@@ -40,14 +53,34 @@ class AppUser(db.Model):
     username = db.Column(db.Text, nullable=False, unique=True)
     email = db.Column(db.Text, nullable=False, unique=True)
     password_hash = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
-
-    reports = db.relationship('Report', back_populates='user')
 
     weekly_digest = db.Column(db.Boolean, default=False)
-    
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+
+    # Relaties
+    reports = db.relationship('Report', back_populates='user')
+    watchlist = db.relationship('UserWatchlist', back_populates='user', cascade="all, delete")
+
     def __repr__(self):
         return f"<AppUser {self.username}>"
+
+
+# ======================================
+# TABLE: UserWatchlist
+# ======================================
+class UserWatchlist(db.Model):
+    __tablename__ = 'user_watchlist'
+
+    id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey('app_user.user_id', ondelete="CASCADE"))
+    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
+    added_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+
+    user = db.relationship('AppUser', back_populates='watchlist')
+    company = db.relationship('Company', back_populates='watchers')
+
+    def __repr__(self):
+        return f"<UserWatchlist user={self.user_id}, company={self.company_id}>"
 
 
 # ======================================
@@ -58,6 +91,7 @@ class Metric(db.Model):
 
     metric_id = db.Column(db.BigInteger, primary_key=True)
     company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
+
     name = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
     tracking_frequency = db.Column(db.Text)
@@ -80,6 +114,7 @@ class Report(db.Model):
     report_id = db.Column(db.BigInteger, primary_key=True)
     generated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     summary = db.Column(db.Text)
+
     user_id = db.Column(db.BigInteger, db.ForeignKey('app_user.user_id', ondelete="SET NULL"))
     company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
 
@@ -100,8 +135,8 @@ class AuditLog(db.Model):
     source_name = db.Column(db.Text)
     source_url = db.Column(db.Text)
     retrieved_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
-    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
 
+    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
     company = db.relationship('Company', back_populates='audit_logs')
 
     def __repr__(self):
@@ -118,9 +153,10 @@ class ChangeEvent(db.Model):
     event_type = db.Column(db.Text)
     description = db.Column(db.Text)
     detected_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
-    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
 
+    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
     company = db.relationship('Company', back_populates='change_events')
 
     def __repr__(self):
         return f"<ChangeEvent {self.event_type}>"
+
