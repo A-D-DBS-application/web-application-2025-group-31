@@ -2,53 +2,90 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Webanalyse | Rival</title>
+    <title>Nieuwe Analyse | Rival</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        /* -------------------------------------- */
+        /* LOADING SPINNER (RIVAL STYLE)          */
+        /* -------------------------------------- */
+        .spinner-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .spinner-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #ddd;
+            border-top-color: var(--accent, #4c84ff);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
+
 <body>
+
 <div class="layout">
+
+    <!-- SIDEBAR -->
     <aside class="sidebar soft-shadow">
         <div>
             <h2>RIVAL</h2>
             <div class="sidebar-tagline">Competitive intelligence</div>
         </div>
+
         <nav>
-            <a href="{{ url_for('main.dashboard') }}">
-                <span class="label">
-                    <span class="dot"></span>
-                    <span>Dashboard</span>
-                </span>
-            </a>
-            <a href="{{ url_for('main.companies') }}">
-                <span class="label">
-                    <span class="dot"></span>
-                    <span>Bedrijven</span>
-                </span>
-            </a>
-            <a href="{{ url_for('main.logout') }}">
-                <span class="label">
-                    <span class="dot"></span>
-                    <span>Uitloggen</span>
-                </span>
-            </a>
+            <a href="{{ url_for('main.dashboard') }}"><span class="label"><span class="dot"></span><span>Dashboard</span></span></a>
+            <a href="{{ url_for('main.scrape') }}" class="active"><span class="label"><span class="dot"></span><span>Nieuwe analyse</span></span></a>
+            <a href="{{ url_for('main.companies') }}"><span class="label"><span class="dot"></span><span>Bedrijven</span></span></a>
+            <a href="{{ url_for('main.watchlist') }}"><span class="label"><span class="dot"></span><span>Watchlist</span></span></a>
+            <a href="{{ url_for('main.logout') }}"><span class="label"><span class="dot"></span><span>Uitloggen</span></span></a>
         </nav>
     </aside>
 
+
+    <!-- MAIN CONTENT -->
     <main class="content fade-in">
+
         <div class="topbar">
-            <div class="topbar-left">
-                <h1>Webanalyse</h1>
-                <p class="subtitle">Gebruik de interne scraper om content en structuur van een site te verkennen.</p>
-            </div>
+            <h1>Nieuwe Webanalyse</h1>
+            <p class="subtitle">Plak hieronder een website URL. Rival analyseert automatisch.</p>
         </div>
+
+        {% if result and result.error %}
+            <p class="alert">❌ {{ result.error }}</p>
+        {% endif %}
 
         <section class="card soft-shadow">
             <div class="card-header">
-                <h2 class="card-title">Website analyseren</h2>
-                <div class="card-meta">Deze analyse wordt nog niet automatisch opgeslagen.</div>
+                <h2 class="card-title">Analyse starten</h2>
+                <div class="card-meta">Scraping + AI baseline wordt automatisch opgeslagen.</div>
             </div>
+
             <div class="card-body">
-                <form method="POST" class="auth-form">
+                <form method="POST" class="auth-form" id="scrapeForm">
                     <label>Website URL</label>
                     <input type="text" name="url" placeholder="https://voorbeeld.nl" required>
                     <button class="button full" type="submit" style="margin-top: 8px;">Analyse uitvoeren</button>
@@ -56,29 +93,34 @@
             </div>
         </section>
 
-        {% if result %}
-            <section class="card card-muted soft-shadow fade-in">
-                {% if result.error %}
-                    <p class="alert">❌ {{ result.error }}</p>
-                {% else %}
-                    <h2 class="card-title">Analyse voor {{ result.url }}</h2>
-                    <p><strong>Titel:</strong> {{ result.title }}</p>
-                    <p><strong>Omschrijving:</strong> {{ result.description }}</p>
-                    {% if result.headings %}
-                        <p><strong>H1-koppen:</strong></p>
-                        <ul class="soft-list">
-                            {% for h in result.headings %}
-                                <li>{{ h }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                {% endif %}
-            </section>
-        {% endif %}
     </main>
 </div>
+
+<!-- LOADER -->
+<div id="loadingSpinner" class="spinner-overlay">
+    <div class="spinner"></div>
+</div>
+
+<!-- SCRIPT: spinner tonen bij submit -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById("scrapeForm");
+    const spinner = document.getElementById("loadingSpinner");
+
+    if (form && spinner) {
+        form.addEventListener("submit", function() {
+            spinner.classList.add("active");
+        });
+    }
+});
+</script>
+
 </body>
 </html>
+
+
+
+
 
 
 

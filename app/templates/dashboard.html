@@ -49,8 +49,8 @@
         <!-- TOP BAR -->
         <div class="topbar">
             <div class="topbar-left">
-                <h1>Intelligence dashboard</h1>
-                <p class="subtitle">Analyseer nieuwe websites, volg je watchlist en bekijk recente signalen.</p>
+                <h1>Intelligence Dashboard</h1>
+                <p class="subtitle">Start nieuwe analyses, beheer je watchlist en bekijk recente signalen.</p>
             </div>
         </div>
 
@@ -59,7 +59,7 @@
             <div class="stat-card">
                 <div class="stat-label">Geanalyseerde websites</div>
                 <div class="stat-value">–</div>
-                <div class="stat-trend">Synchronisatie met Supabase later</div>
+                <div class="stat-trend">Supabase-sync in volgende fase</div>
             </div>
 
             <div class="stat-card">
@@ -75,123 +75,53 @@
             </div>
         </div>
 
-        <!-- SCRAPE + WATCHLIST -->
-        <div class="grid-2">
+        <!-- NIEUWE ANALYSE STARTEN -->
+        <section class="card soft-shadow fade-in" style="margin-bottom:20px;">
+            <div class="card-header">
+                <h2 class="card-title">Nieuwe Websiteanalyse</h2>
+                <div class="card-meta">Rival genereert automatisch een baseline rapport.</div>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('main.scrape') }}" class="button full">
+                    Nieuwe analyse starten →
+                </a>
+            </div>
+        </section>
 
-            <!-- SCRAPE SECTION -->
-            <section class="card soft-shadow fade-in">
-                <div class="card-header">
-                    <h2 class="card-title">Nieuwe websiteanalyse</h2>
-                    <div class="card-meta">Plak een URL, Rival doet de scan.</div>
-                </div>
+        <!-- WATCHLIST -->
+        <section class="card card-muted soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Watchlist</h2>
+                <div class="card-meta">Je gevolgde bedrijven.</div>
+            </div>
 
-                <div class="card-body">
-
-                    <!-- INPUT -->
-                    <form method="POST" class="url-form">
-                        <input type="hidden" name="form_type" value="scrape">
-                        <input type="text" name="scrape_url" placeholder="https://voorbeeldbedrijf.nl" required>
-                        <button type="submit" class="button" style="margin-top:10px;">Analyseren</button>
-                    </form>
-
-                    <!-- SCRAPE RESULT -->
-                    {% if scrape_result %}
-                        {% if scrape_result.error %}
-                            <p class="alert">❌ {{ scrape_result.error }}</p>
-
-                        {% else %}
-                            <div class="fade-in" style="margin-top:18px;">
-                                <h3>Resultaten voor {{ scrape_result.url }}</h3>
-
-                                <p><strong>Titel:</strong> {{ scrape_result.title }}</p>
-                                <p><strong>Omschrijving:</strong> {{ scrape_result.description }}</p>
-
-                                {% if scrape_result.headings %}
-                                    <p><strong>Belangrijke H1-koppen:</strong></p>
-                                    <ul class="soft-list">
-                                        {% for h in scrape_result.headings %}
-                                            <li>{{ h }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-
-                                <!-- ⭐ BASELINE REPORT ⭐ -->
-                                <div class="card soft-shadow" style="margin-top:20px;">
-                                    <div class="card-header">
-                                        <h3 class="card-title">Baseline Report</h3>
-                                        <div class="card-meta">Fundamentals automatisch gedetecteerd</div>
-                                    </div>
-
-                                    <div class="card-body">
-                                        <p><strong>Headquarters:</strong><br>
-                                            {{ scrape_result.headquarters or "Onbekend" }}</p>
-
-                                        <p><strong>Office Locations:</strong><br>
-                                            {{ scrape_result.office_locations or "Niet gevonden" }}</p>
-
-                                        <p><strong>Team Size:</strong><br>
-                                            {{ scrape_result.team_size or "Onbekend" }}</p>
-
-                                        <p><strong>Total Funding:</strong><br>
-                                            {% if scrape_result.funding %}
-                                                €{{ scrape_result.funding }}
-                                            {% else %}
-                                                Onbekend
-                                            {% endif %}
-                                        </p>
-
-                                        <p><strong>Funding History:</strong><br>
-                                            {{ scrape_result.funding_history or "Geen informatie" }}</p>
-
-                                        <p><strong>Traction Signals:</strong><br>
-                                            {{ scrape_result.traction_signals or "Geen signalen gedetecteerd" }}</p>
-                                    </div>
-                                </div>
-                                <!-- EINDE BASELINE -->
-                            </div>
-                        {% endif %}
-                    {% endif %}
-
-                </div>
-            </section>
-
-            <!-- WATCHLIST OVERVIEW -->
-            <section class="card card-muted soft-shadow fade-in">
-                <div class="card-header">
-                    <h2 class="card-title">Watchlist</h2>
-                    <div class="card-meta">Overzicht van je gevolgde bedrijven.</div>
-                </div>
-
-                <div class="card-body">
-                    {% if watchlist %}
-                        <ul class="soft-list">
-                            {% for item in watchlist %}
-                                <li>{{ item }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="subtitle">Nog geen bedrijven in watchlist.</p>
-                    {% endif %}
-                </div>
-            </section>
-
-        </div>
+            <div class="card-body">
+                {% if watchlist %}
+                    <ul class="soft-list">
+                        {% for item in watchlist %}
+                            <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="subtitle">Nog geen bedrijven in watchlist.</p>
+                {% endif %}
+            </div>
+        </section>
 
         <!-- WATCHLIST CONFIG -->
         <section class="card soft-shadow fade-in" style="margin-top:20px;">
             <div class="card-header">
-                <h2 class="card-title">Configureer watchlist</h2>
+                <h2 class="card-title">Configureer Watchlist</h2>
                 <div class="card-meta">Selecteer bedrijven en metrics.</div>
             </div>
 
             <div class="card-body">
-
                 <form method="POST">
                     <input type="hidden" name="form_type" value="watchlist_config">
 
                     <div class="grid-2">
 
-                        <!-- BEDRIJVEN -->
+                        <!-- COMPANIES -->
                         <div>
                             <h3>Bedrijven</h3>
                             <ul class="soft-list" style="max-height:180px; overflow:auto;">
@@ -227,7 +157,6 @@
 
                     <button type="submit" class="button" style="margin-top:10px;">Opslaan</button>
                 </form>
-
             </div>
         </section>
 
@@ -253,4 +182,6 @@
 </div>
 </body>
 </html>
+
+
 
