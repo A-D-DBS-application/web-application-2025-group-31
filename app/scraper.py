@@ -2,77 +2,48 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
-
 import os
+
+# Load API key safely
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# ------------------------------------------
-# RELEVANTE SUBPAGINA’S VINDEN
-# ------------------------------------------
-def discover_relevant_links(url, soup):
-    KEYWORDS = [
-        "about", "company", "over", "team", "jobs", "careers",
-        "contact", "locations", "investors", "press", "news"
-    ]
 
-    links = set()
-
-    for a in soup.find_all("a", href=True):
-        href = a["href"].lower()
-
-        if any(k in href for k in KEYWORDS):
-            if href.startswith("http"):
-                links.add(href)
-            else:
-                base = url.rstrip("/")
-                href = href.lstrip("/")
-                links.add(base + "/" + href)
-
-    return list(links)
-
-
-# ------------------------------------------
-# HTML SCRAPER (MET SUBPAGE DETECTIE)
-# ------------------------------------------
-def fetch_page_text(url, max_chars=8000):
+# ==========================================================
+# 1. FETCH RAW HTML TEXT
+# ==========================================================
+def fetch_page_text(url, max_chars=15000):
     try:
         r = requests.get(url, headers={"User-Agent": "RivalBot/1.0"}, timeout=10)
         if r.status_code != 200:
-            return {"error": f"HTTP {r.status_code}", "title": None, "text": "", "subpages": []}
+            return {"error": f"HTTP {r.status_code}", "title": None, "text": ""}
 
         soup = BeautifulSoup(r.text, "html.parser")
 
         title = soup.title.string.strip() if soup.title and soup.title.string else None
-        text = soup.get_text(separator=" ", strip=True)
-        if text:
-            text = text[:max_chars]
+        text = soup.get_text(separator=" ", strip=True)[:max_chars]
 
-        # ⭐ BELANGRIJK: subpages ontdekken
-        subpages = discover_relevant_links(url, soup)
-
-        return {"error": None, "title": title, "text": text, "subpages": subpages}
+        return {"error": None, "title": title, "text": text}
 
     except Exception as e:
-        return {"error": str(e), "title": None, "text": "", "subpages": []}
+        return {"error": str(e), "title": None, "text": ""}
 
 
-# ------------------------------------------
-# AI BESCHRIJVING (mooie samenvatting)
-# ------------------------------------------
+# ==========================================================
+# 2. AI-GENERATED CLEAN DESCRIPTION
+# ==========================================================
 def generate_ai_description(text: str) -> str:
     if not text or len(text.strip()) < 50:
         return "Geen nuttige omschrijving beschikbaar."
 
     system_msg = (
-        "You summarize website content. "
-        "Ignore menus, navigation, footers, cookie banners, language selectors, and UI text. "
-        "Write a clean, human-friendly description in 2–3 sentences focusing on what the company does."
+        "You summarize website content. Ignore menus, navigation, footers, "
+        "cookie banners, language selectors, and UI text. Write a clean, "
+        "human-friendly description in 2–3 sentences focusing on what the company does."
     )
 
     user_msg = f"""
-Vat deze website samen in maximaal 2–3 zinnen.
-Negeer navigatie, menu's, footers, taalkeuzes, cookie banners en irrelevante interface tekst.
-Beschrijf enkel wat het bedrijf doet en voor wie.
+Vat deze website samen in 2–3 zinnen.
+Negeer navigatie, footers, menus, cookie banners en taalopties.
 
 CONTENT:
 {text}
@@ -87,31 +58,38 @@ CONTENT:
                 {"role": "user", "content": user_msg},
             ],
         )
-
         return response.choices[0].message.content.strip()
 
     except Exception as e:
         return f"AI-fout bij omschrijving: {e}"
 
 
-# ------------------------------------------
-# AI EXTRACTIE VAN BUSINESS INFO (verbeterde prompt)
-# ------------------------------------------
+# ==========================================================
+# 3. AI BUSINESS FUNDAMENTALS EXTRACTION
+# ==========================================================
 def ask_ai_for_company_info(url, title, text):
-
     prompt = f"""
 You are an expert in extracting business fundamentals from messy website text.
 
-Your task:
-Scan the ENTIRE provided content and extract *any* business intelligence signals.
+Be extremely proactive and AGGRESSIVE about detecting HEADQUARTERS and OFFICE LOCATIONS and TEAM SIZE and FUNDING and FUNDING_HISTORY.
+You MUST extract them even if they are only implicitly mentioned.
 
-Be extremely proactive:
-Even small hints like “we operate in 6 countries”, “team of 120”, “HQ in Amsterdam”, 
-“€5M Series A”, “Offices in Copenhagen / Stockholm / Oslo” MUST be captured.
+TEAM SIZE detection rules:
+- Detect phrases like “team of 120”, “we are 30 people”, “over 200 employees”.
+- Detect synonyms: staff, colleagues, consultants, workforce, headcount.
+- Detect ranges: “over 50 experts”, “10+ engineers”, “200+ employees”.
+- If the firm is clearly small (boutique agency), infer 5–30.
+- If the firm is clearly established (30+ years old), infer 30–200.
+- Always return an INTEGER if possible. Otherwise return the closest plausible estimate.
 
-If something is uncertain, guess the MOST LIKELY answer but keep it short.
+FUNDING detection rules:
+- Capture ANY number tied to financing including: “€5M”, “5 million”, “Series A / B / Seed”.
+- If the company is clearly private & consultancy-based:
+  infer “No external funding (privately held)” instead of empty.
+- Accept guesses based on domain (e.g. consulting firms rarely raise VC).
+- Never return an empty string unless absolutely no inference is possible.
 
-Return STRICT VALID JSON ONLY with EXACTLY these fields:
+Return STRICT JSON ONLY with EXACTLY these fields:
 
 {{
   "ai_summary": "",
@@ -129,15 +107,6 @@ Return STRICT VALID JSON ONLY with EXACTLY these fields:
   "traction_signals": ""
 }}
 
-Rules:
-- Look for HQ using any address, city, country mentions, “HQ”, “headquartered in”, etc.
-- Look for team size using patterns like “team of 150”, “120 colleagues”, etc.
-- Look for funding using amounts like “€18M”, “Series A”, “Seed round”.
-- Look for office locations using ANY city list, region description, etc.
-- Look for traction signals: new features, partnerships, growth claims, hiring spikes.
-- Infer competitors from industry if not explicitly listed.
-- If something is NOT found, return "" or null.
-
 CONTENT SOURCE:
 URL: {url}
 TITLE: {title}
@@ -149,42 +118,104 @@ CONTENT:
     try:
         response = client.chat.completions.create(
             model="gpt-4.1-mini",
+            temperature=0,
             messages=[
                 {"role": "system", "content": "Return JSON only."},
                 {"role": "user", "content": prompt},
             ],
-            temperature=0,
         )
 
         raw = response.choices[0].message.content.strip()
-        print("AI RAW OUTPUT:", raw)
 
+        # Try parse
         try:
             return json.loads(raw)
         except:
-            return {"ai_summary": raw}
+            # strip ```json
+            cleaned = raw.replace("```json", "").replace("```", "").strip()
+            try:
+                return json.loads(cleaned)
+            except:
+                return {"ai_summary": raw}
 
     except Exception as e:
         return {
             "ai_summary": f"AI error: {e}",
-            "value_proposition": None,
-            "product_description": None,
-            "target_segment": None,
-            "pricing": None,
+            "value_proposition": "",
+            "product_description": "",
+            "target_segment": "",
+            "pricing": "",
             "key_features": [],
             "competitors": [],
-            "headquarters": None,
-            "office_locations": None,
+            "headquarters": "",
+            "office_locations": "",
             "team_size": None,
-            "funding": None,
-            "funding_history": None,
-            "traction_signals": None,
+            "funding": "",
+            "funding_history": "",
+            "traction_signals": "",
         }
 
 
-# ------------------------------------------
-# MAIN SCRAPER FUNCTIE (MET MULTI-PAGE SCRAPING)
-# ------------------------------------------
+# ==========================================================
+# 4. COMPETITOR ENGINE (Force 5–10 real competitors)
+# ==========================================================
+def generate_competitors(value_prop, target_segment, summary):
+    prompt = f"""
+You are an expert competitive intelligence analyst.
+
+Based on the company's value proposition, target segment, and summary,
+predict the MOST LIKELY direct competitors.
+
+VALUE PROPOSITION:
+{value_prop}
+
+TARGET SEGMENT:
+{target_segment}
+
+SUMMARY:
+{summary}
+
+Return STRICT JSON ONLY:
+
+{{
+  "competitors": []
+}}
+
+Rules:
+- Provide 5–10 concrete companies.
+- Must be real, well-known, or industry-specific.
+- Include direct + indirect competitors.
+- If no data, infer from industry.
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            temperature=0.4,
+            messages=[
+                {"role": "system", "content": "Return JSON only."},
+                {"role": "user", "content": prompt},
+            ],
+        )
+
+        raw = response.choices[0].message.content.strip()
+
+        try:
+            return json.loads(raw).get("competitors", [])
+        except:
+            cleaned = raw.replace("```json", "").replace("```", "").strip()
+            try:
+                return json.loads(cleaned).get("competitors", [])
+            except:
+                return []
+
+    except:
+        return []
+
+
+# ==========================================================
+# 5. MAIN SCRAPER PIPELINE
+# ==========================================================
 def scrape_website(url):
     base = fetch_page_text(url)
     if base["error"]:
@@ -193,27 +224,17 @@ def scrape_website(url):
     title = base["title"] or "Geen titel"
     text = base["text"] or ""
 
-    # ⭐ Combineer homepage + subpages voor betere AI
-    full_text = text
+    description = generate_ai_description(text)
+    ai = ask_ai_for_company_info(url, title, text)
 
-    for link in base["subpages"][:5]:   # max 5 extra pagina’s
-        try:
-            r = requests.get(link, headers={"User-Agent": "RivalBot/1.0"}, timeout=10)
-            if r.status_code == 200:
-                soup = BeautifulSoup(r.text, "html.parser")
-                extra = soup.get_text(separator=" ", strip=True)
-                if extra:
-                    full_text += "\n" + extra[:5000]
-        except:
-            pass
+    # Competitor fallback
+    competitors_extra = generate_competitors(
+        ai.get("value_proposition", ""),
+        ai.get("target_segment", ""),
+        ai.get("ai_summary", "")
+    )
 
-    combined_text = full_text[:15000]
-
-    # Mooie omschrijving op basis van combined_text
-    description = generate_ai_description(combined_text)
-
-    # AI business intelligence feed with extended context
-    ai = ask_ai_for_company_info(url, title, combined_text)
+    competitors_final = ai.get("competitors") or competitors_extra
 
     return {
         "url": url,
@@ -226,7 +247,7 @@ def scrape_website(url):
         "target_segment": ai.get("target_segment"),
         "pricing": ai.get("pricing"),
         "key_features": ai.get("key_features"),
-        "competitors": ai.get("competitors"),
+        "competitors": competitors_final,
 
         "headquarters": ai.get("headquarters"),
         "office_locations": ai.get("office_locations"),
@@ -237,16 +258,15 @@ def scrape_website(url):
     }
 
 
-# ------------------------------------------
-# SELF TEST
-# ------------------------------------------
+# ==========================================================
+# 6. SELF-TEST
+# ==========================================================
 if __name__ == "__main__":
     test_url = "https://www.unisport.com"
     print("Scraping test URL:", test_url)
-
     result = scrape_website(test_url)
-    print("\n--- RESULTAAT ---\n")
     print(json.dumps(result, indent=2, ensure_ascii=False))
+
 
 
 

@@ -28,6 +28,7 @@
         </nav>
     </aside>
 
+
     <main class="content fade-in">
 
         <div class="topbar">
@@ -40,20 +41,17 @@
         <a href="{{ url_for('main.companies') }}" class="button" style="margin-bottom:14px;">← Terug naar bedrijven</a>
 
 
-        <!-- ========================================= -->
-        <!-- BASELINE RAPPORT -->
-        <!-- ========================================= -->
 
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 1: WEBSITE & IDENTITEIT -->
+        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
-
             <div class="card-header">
-                <h2 class="card-title">Baseline Report</h2>
-                <div class="card-meta">Gegenereerd via scraping + AI</div>
+                <h2 class="card-title">Bedrijfsinformatie</h2>
+                <div class="card-meta">Website en identiteit</div>
             </div>
-
             <div class="card-body">
-
-                <!-- WEBSITE -->
                 <p><strong>Website:</strong><br>
                     {% if company.website_url %}
                         <a href="{{ company.website_url }}" target="_blank">{{ company.website_url }}</a>
@@ -61,48 +59,148 @@
                         <span class="tag">Geen website</span>
                     {% endif %}
                 </p>
-
-                <!-- AI SUMMARY -->
-                <p><strong>AI Summary:</strong><br>{{ company.ai_summary or "Geen samenvatting beschikbaar" }}</p>
-
-                <!-- AI structured fields -->
-                <p><strong>Value Proposition:</strong><br>{{ company.value_proposition or "Onbekend" }}</p>
-
-                <p><strong>Product Description:</strong><br>{{ company.product_description or "Geen info" }}</p>
-
-                <p><strong>Target Segment:</strong><br>{{ company.target_segment or "Onbekend" }}</p>
-
-                <p><strong>Pricing:</strong><br>{{ company.pricing or "Geen pricing gevonden" }}</p>
+            </div>
+        </section>
 
 
-                <!-- FEATURES -->
-                <p><strong>Key Features:</strong><br>
-                    {% if company.key_features %}
-                        <ul>
-                            {% for f in company.key_features %}
-                                <li>{{ f }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        Geen features gedetecteerd.
-                    {% endif %}
+
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 2: AI SUMMARY -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">AI Summary</h2>
+                <div class="card-meta">Gegenereerd via scraping + AI</div>
+            </div>
+            <div class="card-body">
+                <p>{{ company.ai_summary or "Geen samenvatting beschikbaar" }}</p>
+            </div>
+        </section>
+
+
+
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 3: VALUE PROPOSITION -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Value Proposition</h2>
+            </div>
+            <div class="card-body">
+                <p>{{ company.value_proposition or "Onbekend" }}</p>
+            </div>
+        </section>
+
+
+
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 4: PRODUCT OVERVIEW -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Productbeschrijving</h2>
+            </div>
+            <div class="card-body">
+                <p>{{ company.product_description or "Geen productinformatie beschikbaar" }}</p>
+            </div>
+        </section>
+
+
+
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 5: TARGET SEGMENT -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Doelgroep</h2>
+            </div>
+            <div class="card-body">
+                <p>{{ company.target_segment or "Onbekend segment" }}</p>
+            </div>
+        </section>
+
+
+
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 6: PRICING -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Pricing</h2>
+            </div>
+            <div class="card-body">
+                <p>{{ company.pricing or "Geen pricing gevonden" }}</p>
+            </div>
+        </section>
+
+
+
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 7: KEY FEATURES -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Belangrijkste Features</h2>
+            </div>
+            <div class="card-body">
+                {% if company.key_features %}
+                    <ul class="soft-list">
+                        {% for f in company.key_features %}
+                            <li>{{ f }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="subtitle">Geen features gedetecteerd.</p>
+                {% endif %}
+            </div>
+        </section>
+
+
+
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 8: COMPETITORS -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Competitive Landscape</h2>
+                <div class="card-meta">Automatisch gedetecteerde vergelijkbare bedrijven</div>
+            </div>
+            <div class="card-body">
+                {% if company.competitors %}
+                    <ul class="soft-list">
+                        {% for c in company.competitors %}
+                            <li>{{ c }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="subtitle">Geen concurrenten gevonden.</p>
+                {% endif %}
+            </div>
+        </section>
+
+
+
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 9: BUSINESS FUNDAMENTALS -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Business Fundamentals</h2>
+                <div class="card-meta">Kernindicatoren gedetecteerd via AI</div>
+            </div>
+            <div class="card-body">
+
+                <p><strong>Headquarters:</strong><br>
+                    {{ company.headquarters or "Onbekend" }}
                 </p>
-
-                <!-- COMPETITORS -->
-                <p><strong>Competitors:</strong><br>
-                    {% if company.competitors %}
-                        <ul>
-                            {% for c in company.competitors %}
-                                <li>{{ c }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        Geen concurrenten gevonden.
-                    {% endif %}
-                </p>
-
-                <!-- FUNDAMENTALS -->
-                <p><strong>Headquarters:</strong><br>{{ company.headquarters or "Onbekend" }}</p>
 
                 <p><strong>Office Locations:</strong><br>
                     {% if company.office_locations %}
@@ -112,19 +210,35 @@
                     {% endif %}
                 </p>
 
-                <p><strong>Team Size:</strong><br>{{ company.team_size or "Onbekend" }}</p>
+                <p><strong>Team Size:</strong><br>
+                    {{ company.team_size or "Onbekend" }}
+                </p>
 
-                <p><strong>Total Funding:</strong><br>{{ company.funding or "Onbekend" }}</p>
+                <p><strong>Total Funding:</strong><br>
+                    {{ company.funding or "Onbekend" }}
+                </p>
 
-                <p><strong>Funding History:</strong><br>{{ company.funding_history or "Geen gegevens" }}</p>
-
-                <p><strong>Traction Signals:</strong><br>{{ company.traction_signals or "Geen signalen" }}</p>
-
-                <!-- TIMESTAMP -->
-                <p><strong>Aangemaakt op:</strong><br>{{ company.created_at }}</p>
+                <p><strong>Funding History:</strong><br>
+                    {{ company.funding_history or "Geen gegevens" }}
+                </p>
 
             </div>
+        </section>
 
+
+
+
+        <!-- =============================================================== -->
+        <!-- BLOCK 10: TRACTION SIGNALS -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in">
+            <div class="card-header">
+                <h2 class="card-title">Traction Signals</h2>
+                <div class="card-meta">Gedetecteerde groei / activiteit</div>
+            </div>
+            <div class="card-body">
+                <p>{{ company.traction_signals or "Geen signalen" }}</p>
+            </div>
         </section>
 
     </main>
@@ -132,6 +246,7 @@
 </div>
 </body>
 </html>
+
 
 
 
