@@ -6,15 +6,39 @@ from openai import OpenAI
 import os
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# ------------------------------------------
+# RELEVANTE SUBPAGINA’S VINDEN
+# ------------------------------------------
+def discover_relevant_links(url, soup):
+    KEYWORDS = [
+        "about", "company", "over", "team", "jobs", "careers",
+        "contact", "locations", "investors", "press", "news"
+    ]
+
+    links = set()
+
+    for a in soup.find_all("a", href=True):
+        href = a["href"].lower()
+
+        if any(k in href for k in KEYWORDS):
+            if href.startswith("http"):
+                links.add(href)
+            else:
+                base = url.rstrip("/")
+                href = href.lstrip("/")
+                links.add(base + "/" + href)
+
+    return list(links)
+
 
 # ------------------------------------------
-# HTML SCRAPER
+# HTML SCRAPER (MET SUBPAGE DETECTIE)
 # ------------------------------------------
 def fetch_page_text(url, max_chars=8000):
     try:
         r = requests.get(url, headers={"User-Agent": "RivalBot/1.0"}, timeout=10)
         if r.status_code != 200:
-            return {"error": f"HTTP {r.status_code}", "title": None, "text": ""}
+            return {"error": f"HTTP {r.status_code}", "title": None, "text": "", "subpages": []}
 
         soup = BeautifulSoup(r.text, "html.parser")
 
@@ -23,10 +47,13 @@ def fetch_page_text(url, max_chars=8000):
         if text:
             text = text[:max_chars]
 
-        return {"error": None, "title": title, "text": text}
+        # ⭐ BELANGRIJK: subpages ontdekken
+        subpages = discover_relevant_links(url, soup)
+
+        return {"error": None, "title": title, "text": text, "subpages": subpages}
 
     except Exception as e:
-        return {"error": str(e), "title": None, "text": ""}
+        return {"error": str(e), "title": None, "text": "", "subpages": []}
 
 
 # ------------------------------------------
@@ -68,14 +95,23 @@ CONTENT:
 
 
 # ------------------------------------------
-# AI EXTRACTIE VAN BUSINESS INFO
+# AI EXTRACTIE VAN BUSINESS INFO (verbeterde prompt)
 # ------------------------------------------
 def ask_ai_for_company_info(url, title, text):
 
     prompt = f"""
-Extract structured business intelligence from this website text.
+You are an expert in extracting business fundamentals from messy website text.
 
-Return VALID JSON ONLY with exact keys:
+Your task:
+Scan the ENTIRE provided content and extract *any* business intelligence signals.
+
+Be extremely proactive:
+Even small hints like “we operate in 6 countries”, “team of 120”, “HQ in Amsterdam”, 
+“€5M Series A”, “Offices in Copenhagen / Stockholm / Oslo” MUST be captured.
+
+If something is uncertain, guess the MOST LIKELY answer but keep it short.
+
+Return STRICT VALID JSON ONLY with EXACTLY these fields:
 
 {{
   "ai_summary": "",
@@ -93,8 +129,19 @@ Return VALID JSON ONLY with exact keys:
   "traction_signals": ""
 }}
 
+Rules:
+- Look for HQ using any address, city, country mentions, “HQ”, “headquartered in”, etc.
+- Look for team size using patterns like “team of 150”, “120 colleagues”, etc.
+- Look for funding using amounts like “€18M”, “Series A”, “Seed round”.
+- Look for office locations using ANY city list, region description, etc.
+- Look for traction signals: new features, partnerships, growth claims, hiring spikes.
+- Infer competitors from industry if not explicitly listed.
+- If something is NOT found, return "" or null.
+
+CONTENT SOURCE:
 URL: {url}
 TITLE: {title}
+
 CONTENT:
 {text}
 """
@@ -110,7 +157,6 @@ CONTENT:
         )
 
         raw = response.choices[0].message.content.strip()
-
         print("AI RAW OUTPUT:", raw)
 
         try:
@@ -137,7 +183,7 @@ CONTENT:
 
 
 # ------------------------------------------
-# MAIN SCRAPER FUNCTIE
+# MAIN SCRAPER FUNCTIE (MET MULTI-PAGE SCRAPING)
 # ------------------------------------------
 def scrape_website(url):
     base = fetch_page_text(url)
@@ -147,10 +193,27 @@ def scrape_website(url):
     title = base["title"] or "Geen titel"
     text = base["text"] or ""
 
-    # ✨ NIEUW — mooie AI-beschrijving
-    description = generate_ai_description(text)
+    # ⭐ Combineer homepage + subpages voor betere AI
+    full_text = text
 
-    ai = ask_ai_for_company_info(url, title, text)
+    for link in base["subpages"][:5]:   # max 5 extra pagina’s
+        try:
+            r = requests.get(link, headers={"User-Agent": "RivalBot/1.0"}, timeout=10)
+            if r.status_code == 200:
+                soup = BeautifulSoup(r.text, "html.parser")
+                extra = soup.get_text(separator=" ", strip=True)
+                if extra:
+                    full_text += "\n" + extra[:5000]
+        except:
+            pass
+
+    combined_text = full_text[:15000]
+
+    # Mooie omschrijving op basis van combined_text
+    description = generate_ai_description(combined_text)
+
+    # AI business intelligence feed with extended context
+    ai = ask_ai_for_company_info(url, title, combined_text)
 
     return {
         "url": url,
@@ -184,6 +247,8 @@ if __name__ == "__main__":
     result = scrape_website(test_url)
     print("\n--- RESULTAAT ---\n")
     print(json.dumps(result, indent=2, ensure_ascii=False))
+
+
 
 
 
