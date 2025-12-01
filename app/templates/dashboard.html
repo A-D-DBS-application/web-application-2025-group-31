@@ -164,14 +164,35 @@
         <section class="card card-muted soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Recente meldingen</h2>
-                <div class="card-meta">Mock data</div>
+                <div class="card-meta">Strategische updates van alle bedrijven</div>
             </div>
 
             <div class="card-body">
+
                 {% if alerts %}
-                    {% for alert in alerts %}
-                        <div class="alert">{{ alert }}</div>
-                    {% endfor %}
+                    <ul class="soft-list">
+                        {% for a in alerts %}
+                            <li style="margin-bottom: 10px;">
+                                <strong>{{ a.type }}</strong>
+
+                                {% if a.company_id %}
+                                    — 
+                                    <a href="{{ url_for('main.company_detail', company_id=a.company_id) }}">
+                                        {{ a.description }}
+                                    </a>
+                                {% else %}
+                                    — {{ a.description }}
+                                {% endif %}
+
+                                <br>
+
+                                <span class="badge-soft">{{ a.time.strftime('%Y-%m-%d') }}</span>
+                                <br>
+
+                                <span class="subtitle">Bedrijf: {{ a.company_name }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
                 {% else %}
                     <p class="subtitle">Geen nieuwe meldingen.</p>
                 {% endif %}

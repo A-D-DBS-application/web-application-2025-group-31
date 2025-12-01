@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from app.models import AppUser, Company, Metric, AuditLog
+from app.models import AppUser, Company, Metric, AuditLog, ChangeEvent
 import csv
 import io
 from app.scraper import scrape_website
@@ -9,6 +9,34 @@ from app.scraper import scrape_website
 bp = Blueprint('main', __name__)
 
 METRIC_OPTIONS = ["Pricing", "Features", "Reviews", "Funding", "Hiring"]
+
+# ======================================================
+# TEKST NORMALISATIE EN VERGELIJKING
+# ======================================================
+
+import difflib
+import re
+
+def normalize_text(s: str):
+    if not s:
+        return ""
+    s = s.lower().strip()
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+def texts_similar(a: str, b: str, threshold=0.90):
+    """Return True if texts are almost the same (ignore small AI noise)."""
+    a_norm = normalize_text(a)
+    b_norm = normalize_text(b)
+    if not a_norm and not b_norm:
+        return True
+    similarity = difflib.SequenceMatcher(None, a_norm, b_norm).ratio()
+    return similarity >= threshold
+
+def normalize_list(lst):
+    if not lst:
+        return []
+    return sorted([normalize_text(x) for x in lst if x and str(x).strip() != ""])
 
 
 # =====================================================
@@ -143,18 +171,38 @@ def dashboard():
     watchlist_ids = session.get('watchlist_companies', [])
     metrics_selected = session.get('watchlist_metrics', [])
 
-    companies_watchlist = Company.query.filter(
-        Company.company_id.in_(watchlist_ids)
-    ).all() if watchlist_ids else []
+    companies_watchlist = (
+        Company.query.filter(Company.company_id.in_(watchlist_ids)).all()
+        if watchlist_ids else []
+    )
 
     all_companies = Company.query.all()
+
+    # ----------------------------------------------------
+    # CHANGE EVENTS → OMZETTEN NAAR NETTE DICTIONARY OBJECTEN
+    # ----------------------------------------------------
+    recent_events_raw = ChangeEvent.query.order_by(
+        ChangeEvent.detected_at.desc()
+    ).limit(8).all()
+
+    alerts = []
+    for e in recent_events_raw:
+        company = Company.query.get(e.company_id)
+        alerts.append({
+            "company_name": company.name if company else "Onbekend bedrijf",
+            "company_id": company.company_id if company else None,
+            "type": e.event_type,
+            "description": e.description,
+            "time": e.detected_at
+        })
+
 
     return render_template(
         'dashboard.html',
         user=user,
         scrape_result=scrape_result,
         watchlist=[c.name for c in companies_watchlist],
-        alerts=[],
+        alerts=alerts,                       # <-- GEEN nested list meer
         metric_options=METRIC_OPTIONS,
         metrics_selected=metrics_selected,
         companies=all_companies
@@ -171,7 +219,14 @@ def company_detail(company_id):
         return redirect(url_for('main.login'))
 
     company = Company.query.get_or_404(company_id)
-    return render_template('company_detail.html', company=company)
+
+    # Alle wijzigingen voor dit bedrijf (nieuw → oud)
+    events = ChangeEvent.query.filter_by(company_id=company_id)\
+        .order_by(ChangeEvent.detected_at.desc())\
+        .all()
+
+    return render_template('company_detail.html', company=company, events=events)
+
 
 
 # =====================================================
@@ -275,7 +330,7 @@ def companies():
 
 
 # =====================================================
-# SCRAPE PAGE (AI + AUTO SAVE → Supabase)
+# SCRAPE PAGE (AI + AUTO SAVE + CHANGE DETECTION)
 # =====================================================
 
 @bp.route('/scrape', methods=['GET', 'POST'])
@@ -292,16 +347,96 @@ def scrape():
     if not url:
         return render_template('scrape.html', result={'error': "Geen URL opgegeven."})
 
+    # --- SCRAPEN ---
     result = scrape_website(url)
     if result.get("error"):
         return render_template('scrape.html', result=result)
 
+    # --- CHECK OF BEDRIJF BESTAAT ---
     existing = Company.query.filter_by(website_url=url).first()
 
-    # -----------------------------
-    # UPDATE bestaand bedrijf
-    # -----------------------------
+    # ============================================
+    # UPDATE BESTAAND BEDRIJF
+    # ============================================
     if existing:
+
+        # ----------------------------------------
+        # 1) STRATEGIC MOVE DETECTION
+        # ----------------------------------------
+        change_events = []
+
+        # ===== FEATURES =====
+        old_features = normalize_list(existing.key_features)
+        new_features = normalize_list(result.get("key_features"))
+
+        added_features = [f for f in new_features if f not in old_features]
+        removed_features = [f for f in old_features if f not in new_features]
+
+        for f in added_features:
+            change_events.append({
+                "event_type": "new_feature",
+                "description": f"Nieuwe feature toegevoegd: {f}"
+            })
+
+        for f in removed_features:
+            change_events.append({
+                "event_type": "removed_feature",
+                "description": f"Feature verwijderd: {f}"
+            })
+
+        # ===== PRICING =====
+        old_price = existing.pricing or ""
+        new_price = result.get("pricing") or ""
+
+        if not texts_similar(old_price, new_price):
+            if old_price and new_price:
+                change_events.append({
+                    "event_type": "pricing_change",
+                    "description": f"Pricing gewijzigd van '{old_price}' → '{new_price}'"
+                })
+            elif new_price:
+                change_events.append({
+                    "event_type": "pricing_added",
+                    "description": f"Pricing toegevoegd: {new_price}"
+                })
+            elif old_price:
+                change_events.append({
+                    "event_type": "pricing_removed",
+                    "description": "Pricing verwijderd"
+                })
+
+        # ===== PRODUCT DESCRIPTION =====
+        old_product = existing.product_description or ""
+        new_product = result.get("product_description") or ""
+
+        if not texts_similar(old_product, new_product):
+            change_events.append({
+                "event_type": "product_change",
+                "description": "Productbeschrijving gewijzigd (mogelijke nieuwe productlijn)"
+            })
+
+        # ===== TARGET SEGMENT =====
+        old_segment = existing.target_segment or ""
+        new_segment = result.get("target_segment") or ""
+
+        if not texts_similar(old_segment, new_segment):
+            change_events.append({
+                "event_type": "segment_change",
+                "description": "Target segment gewijzigd"
+            })
+
+        # Sla alle echte wijzigingen op
+        for ev in change_events:
+            db.session.add(ChangeEvent(
+                company_id=existing.company_id,
+                event_type=ev["event_type"],
+                description=ev["description"]
+            ))
+
+
+        # ----------------------------------------
+        # 2) UPDATE BEDRIJFSGEGEVENS
+        # ----------------------------------------
         existing.name = result.get("title") or existing.name
 
         existing.headquarters = result.get("headquarters")
@@ -320,11 +455,12 @@ def scrape():
         existing.competitors = result.get("competitors")
 
         db.session.commit()
+
         return redirect(url_for('main.company_detail', company_id=existing.company_id))
 
-    # -----------------------------
-    # NIEUW bedrijf
-    # -----------------------------
+    # ============================================
+    # NIEUW BEDRIJF
+    # ============================================
     new_company = Company(
         name=result.get("title") or "Onbekend bedrijf",
         website_url=url,
@@ -353,9 +489,11 @@ def scrape():
         source_name="Scraper + AI",
         source_url=url
     ))
+
     db.session.commit()
 
     return redirect(url_for('main.company_detail', company_id=new_company.company_id))
+
 
 
 # =====================================================

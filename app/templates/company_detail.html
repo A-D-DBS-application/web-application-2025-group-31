@@ -225,6 +225,34 @@
             </div>
         </section>
 
+        <!-- ========================================= -->
+        <!-- STRATEGISCHE WIJZIGINGEN (CHANGE EVENTS) -->
+        <!-- ========================================= -->
+
+        <section class="card soft-shadow fade-in" style="margin-top: 25px;">
+            <div class="card-header">
+                <h2 class="card-title">Strategische wijzigingen</h2>
+                <div class="card-meta">Nieuwe features, pricing updates, productlanceringen...</div>
+            </div>
+
+            <div class="card-body">
+
+                {% if events and events|length > 0 %}
+                    <ul class="soft-list">
+                        {% for e in events %}
+                            <li style="margin-bottom: 8px;">
+                                <strong>{{ e.event_type }}</strong><br>
+                                {{ e.description }}<br>
+                                <span class="badge-soft">{{ e.detected_at.strftime('%Y-%m-%d') }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="subtitle">Geen strategische wijzigingen gedetecteerd.</p>
+                {% endif %}
+
+            </div>
+        </section>
 
 
 
