@@ -279,6 +279,62 @@ def watchlist():
         logs_by_company=logs_by_company
     )
 
+# =====================================================
+# EXPORT WATCHLIST AUDIT (CSV / JSON)
+# =====================================================
+
+@bp.route('/export-watchlist-audit')
+def export_watchlist_audit():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    fmt = request.args.get("format", "csv").lower()
+
+    ids = session.get('watchlist_companies', [])
+    if not ids:
+        return "Geen bedrijven in watchlist.", 400
+
+    ids = [int(cid) for cid in ids]
+
+    logs = (
+        AuditLog.query
+        .filter(AuditLog.company_id.in_(ids))
+        .order_by(AuditLog.retrieved_at.desc())
+        .all()
+    )
+
+    # ---------------------- JSON EXPORT ----------------------
+    if fmt == "json":
+        out = []
+        for log in logs:
+            company = Company.query.get(log.company_id)
+            out.append({
+                "company": company.name if company else "Onbekend",
+                "source_name": log.source_name,
+                "source_url": log.source_url,
+                "retrieved_at": log.retrieved_at.isoformat() if log.retrieved_at else None
+            })
+        return jsonify(out)
+
+    # ---------------------- CSV EXPORT ----------------------
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Company", "Source Name", "Source URL", "Retrieved At"])
+
+    for log in logs:
+        company = Company.query.get(log.company_id)
+        writer.writerow([
+            company.name if company else "Onbekend",
+            log.source_name,
+            log.source_url,
+            log.retrieved_at
+        ])
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=audit_export.csv"}
+    )
 
 # =====================================================
 # COMPANIES OVERVIEW
