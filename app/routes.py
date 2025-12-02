@@ -142,10 +142,10 @@ def logout():
     session.clear()
     return redirect(url_for('main.login'))
 
-
 # =====================================================
 # DASHBOARD
 # =====================================================
+
 
 @bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -155,21 +155,36 @@ def dashboard():
     user = AppUser.query.get(session["user_id"])
     scrape_result = None
 
+    # -------------------------
+    # FORM HANDLING
+    # -------------------------
     if request.method == 'POST':
         form_type = request.form.get('form_type')
 
+        # --- WATCHLIST CONFIG
         if form_type == 'watchlist_config':
-            session['watchlist_companies'] = [int(cid) for cid in request.form.getlist('companies')]
+            session['watchlist_companies'] = [
+                int(cid) for cid in request.form.getlist('companies')
+            ]
             session['watchlist_metrics'] = [
                 m for m in request.form.getlist('metrics') if m in METRIC_OPTIONS
             ]
 
+        # --- COMPETITOR CONFIG (NIEUW)
+        elif form_type == 'competitor_config':
+            session['tracked_competitors'] = request.form.getlist('competitors')
+
+        # --- SCRAPE
         elif form_type == 'scrape':
             url = request.form.get('scrape_url')
             return redirect(url_for('main.scrape') + f"?url={url}")
 
+    # -------------------------
+    # DATA LADEN
+    # -------------------------
     watchlist_ids = session.get('watchlist_companies', [])
     metrics_selected = session.get('watchlist_metrics', [])
+    competitors_selected = session.get('tracked_competitors', [])
 
     companies_watchlist = (
         Company.query.filter(Company.company_id.in_(watchlist_ids)).all()
@@ -178,12 +193,30 @@ def dashboard():
 
     all_companies = Company.query.all()
 
-    # ----------------------------------------------------
-    # CHANGE EVENTS → MAX 3 + MEER-LINK
-    # ----------------------------------------------------
-    recent_events_raw = ChangeEvent.query.order_by(
-        ChangeEvent.detected_at.desc()
-    ).limit(3).all()
+    # ----------------------------------------
+    # ALLE DETECTEERDE COMPETITORS UIT DATABASE
+    # ----------------------------------------
+    all_detected_competitors = set()
+    for comp in all_companies:
+        if comp.competitors:
+            for c in comp.competitors:
+                if c and str(c).strip() != "":
+                    all_detected_competitors.add(c)
+    all_detected_competitors = sorted(all_detected_competitors)
+
+    # ----------------------------------------
+    # FILTER ALERTS OP BASIS VAN GESELECTEERDE COMPETITORS
+    # ----------------------------------------
+    if competitors_selected:
+        recent_events_raw = ChangeEvent.query.filter(
+            ChangeEvent.description.ilike(
+                '%' + '%'.join(competitors_selected) + '%'
+            )
+        ).order_by(ChangeEvent.detected_at.desc()).limit(3).all()
+    else:
+        recent_events_raw = ChangeEvent.query.order_by(
+            ChangeEvent.detected_at.desc()
+        ).limit(3).all()
 
     alerts = []
     for e in recent_events_raw:
@@ -205,9 +238,12 @@ def dashboard():
         alerts=alerts,
         metric_options=METRIC_OPTIONS,
         metrics_selected=metrics_selected,
+        competitors_selected=competitors_selected,
+        all_competitors=all_detected_competitors,
         companies=all_companies,
         more_alerts_count=max(0, ChangeEvent.query.count() - 3)
     )
+
   
 
 # =====================================================

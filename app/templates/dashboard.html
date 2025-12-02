@@ -71,11 +71,11 @@
             <div class="stat-card">
                 <div class="stat-label">Ongelezen alerts</div>
                 <div class="stat-value">{{ alerts|length if alerts else 0 }}</div>
-                <div class="stat-trend">Mock data</div>
+                <div class="stat-trend">Strategische changes</div>
             </div>
         </div>
 
-        <!-- NIEUWE ANALYSE STARTEN -->
+        <!-- NIEUWE ANALYSE -->
         <section class="card soft-shadow fade-in" style="margin-bottom:20px;">
             <div class="card-header">
                 <h2 class="card-title">Nieuwe Websiteanalyse</h2>
@@ -108,26 +108,29 @@
             </div>
         </section>
 
-        <!-- WATCHLIST CONFIG -->
+        <!-- CONFIG BLOCK -->
         <section class="card soft-shadow fade-in" style="margin-top:20px;">
             <div class="card-header">
-                <h2 class="card-title">Configureer Watchlist</h2>
-                <div class="card-meta">Selecteer bedrijven en metrics.</div>
+                <h2 class="card-title">Configureer Watchlist & Competitors</h2>
+                <div class="card-meta">Selecteer bedrijven, metrics én competitors.</div>
             </div>
 
             <div class="card-body">
-                <form method="POST">
+                
+                <!-- WATCHLIST CONFIG -->
+                <form method="POST" style="margin-bottom: 20px;">
                     <input type="hidden" name="form_type" value="watchlist_config">
+                    <h3>Watchlist instellingen</h3>
 
                     <div class="grid-2">
 
                         <!-- COMPANIES -->
                         <div>
-                            <h3>Bedrijven</h3>
+                            <h4>Bedrijven</h4>
                             <ul class="soft-list" style="max-height:180px; overflow:auto;">
                                 {% for c in companies %}
                                 <li>
-                                    <label style="display:flex;align-items:center;gap:6px;">
+                                    <label style="display:flex;gap:6px;">
                                         <input type="checkbox" name="companies" value="{{ c.company_id }}"
                                             {% if c.company_id in session.get('watchlist_companies',[]) %}checked{% endif %}>
                                         {{ c.name }}
@@ -139,11 +142,11 @@
 
                         <!-- METRICS -->
                         <div>
-                            <h3>Metrics</h3>
+                            <h4>Metrics</h4>
                             <ul class="soft-list" style="max-height:180px; overflow:auto;">
                                 {% for m in metric_options %}
                                 <li>
-                                    <label style="display:flex;align-items:center;gap:6px;">
+                                    <label style="display:flex;gap:6px;">
                                         <input type="checkbox" name="metrics" value="{{ m }}"
                                             {% if m in metrics_selected %}checked{% endif %}>
                                         {{ m }}
@@ -157,6 +160,31 @@
 
                     <button type="submit" class="button" style="margin-top:10px;">Opslaan</button>
                 </form>
+
+                <!-- COMPETITOR CONFIG -->
+                <form method="POST">
+                    <input type="hidden" name="form_type" value="competitor_config">
+
+                    <h3>Competitor tracking</h3>
+                    <p class="subtitle">Selecteer welke competitors gevolgd moeten worden in alerts.</p>
+
+                    <ul class="soft-list" style="max-height:200px; overflow:auto;">
+
+                        {% for comp in all_competitors %}
+                        <li>
+                            <label style="display:flex;gap:6px;">
+                                <input type="checkbox" name="competitors"
+                                    value="{{ comp }}"
+                                    {% if comp in competitors_selected %}checked{% endif %}>
+                                {{ comp }}
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <button type="submit" class="button" style="margin-top:10px;">Opslaan</button>
+                </form>
+
             </div>
         </section>
 
@@ -201,6 +229,7 @@
 </div>
 </body>
 </html>
+
 
 
 
