@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Audit Logs | Rival</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar soft-shadow">
+        <div>
+            <h2>RIVAL</h2>
+            <div class="sidebar-tagline">Competitive intelligence</div>
+        </div>
+
+        <nav>
+            <a href="{{ url_for('main.dashboard') }}">
+                <span class="label"><span class="dot"></span><span>Dashboard</span></span>
+            </a>
+            <a href="{{ url_for('main.watchlist') }}">
+                <span class="label"><span class="dot"></span><span>Watchlist</span></span>
+            </a>
+            <a href="{{ url_for('main.companies') }}">
+                <span class="label"><span class="dot"></span><span>Bedrijven</span></span>
+            </a>
+            <a href="{{ url_for('main.all_alerts') }}">
+                <span class="label"><span class="dot"></span><span>Meldingen</span></span>
+            </a>
+            <a href="{{ url_for('main.audit_logs') }}" class="active">
+                <span class="label"><span class="dot"></span><span>Audit Logs</span></span>
+            </a>
+            <a href="{{ url_for('main.logout') }}">
+                <span class="label"><span class="dot"></span><span>Uitloggen</span></span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">Data Compliance</div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="content fade-in">
+
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1>Bronverificatie & Audit logs</h1>
+                <p class="subtitle">Overzicht van ALLE datapunten die Rival heeft opgehaald.</p>
+            </div>
+        </div>
+
+        <section class="card soft-shadow fade-in">
+
+            <div class="card-header">
+                <h2 class="card-title">Audit Log Historiek</h2>
+                <div class="card-meta">Elke scrape, bron en tijdstip wordt hier opgeslagen.</div>
+            </div>
+
+            <div class="card-body">
+                <div style="margin-bottom:14px;">
+                    <a class="button" href="{{ url_for('main.export_all_audit_logs', format='csv') }}">Export CSV</a>
+                    <a class="button" href="{{ url_for('main.export_all_audit_logs', format='json') }}">Export JSON</a>
+                </div>
+
+                {% if logs %}
+                    <ul class="soft-list">
+                        {% for log in logs %}
+                            <li style="margin-bottom: 14px;">
+                                <strong>{{ log.company }}</strong><br>
+                                Bron: {{ log.source_name }}
+                                {% if log.source_url %}
+                                    — <a href="{{ log.source_url }}" target="_blank">↗</a>
+                                {% endif %}
+                                <br>
+                                <span class="badge-soft">{{ log.retrieved_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="subtitle">Nog geen audit logs geregistreerd.</p>
+                {% endif %}
+            </div>
+
+        </section>
+
+    </main>
+</div>
+</body>
+</html>

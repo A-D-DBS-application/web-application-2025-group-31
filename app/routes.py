@@ -648,6 +648,72 @@ def scrape():
 
     return redirect(url_for('main.company_detail', company_id=new_company.company_id))
 
+# =====================================================
+# GLOBAL AUDIT LOG OVERVIEW (Compliance)
+# =====================================================
+
+@bp.route('/audit-logs')
+def audit_logs():
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    logs = AuditLog.query.order_by(AuditLog.retrieved_at.desc()).all()
+
+    enriched_logs = []
+    for log in logs:
+        company = Company.query.get(log.company_id)
+        enriched_logs.append({
+            "company": company.name if company else "Onbekend",
+            "company_id": log.company_id,
+            "source_name": log.source_name,
+            "source_url": log.source_url,
+            "retrieved_at": log.retrieved_at
+        })
+
+    return render_template("audit_logs.html", logs=enriched_logs)
+
+@bp.route('/audit-logs/export')
+def export_all_audit_logs():
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    fmt = request.args.get("format", "csv").lower()
+
+    logs = AuditLog.query.order_by(AuditLog.retrieved_at.desc()).all()
+
+    # JSON export
+    if fmt == "json":
+        out = []
+        for log in logs:
+            company = Company.query.get(log.company_id)
+            out.append({
+                "company": company.name if company else "Onbekend",
+                "source_name": log.source_name,
+                "source_url": log.source_url,
+                "retrieved_at": log.retrieved_at.isoformat() if log.retrieved_at else None
+            })
+        return jsonify(out)
+
+    # CSV export
+    import csv, io
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Company", "Source Name", "Source URL", "Retrieved At"])
+
+    for log in logs:
+        company = Company.query.get(log.company_id)
+        writer.writerow([
+            company.name if company else "Onbekend",
+            log.source_name,
+            log.source_url,
+            log.retrieved_at
+        ])
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=all_audit_logs.csv"}
+    )
 
 
 # =====================================================
