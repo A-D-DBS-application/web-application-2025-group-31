@@ -575,36 +575,3 @@ def update_weekly_mail():
     db.session.commit()
 
     return redirect(url_for("main.weekly_mail_settings"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
