@@ -40,6 +40,22 @@
 
         <a href="{{ url_for('main.companies') }}" class="button" style="margin-bottom:14px;">← Terug naar bedrijven</a>
 
+        <!-- EXPORT BUTTONS -->
+        <div style="margin: 10px 0 20px 0;">
+            <a class="button" href="{{ url_for('main.export_company', company_id=company.company_id, format='json') }}">
+                Export JSON
+            </a>
+
+            <a class="button" href="{{ url_for('main.export_company', company_id=company.company_id, format='csv') }}">
+                Export CSV
+            </a>
+
+            <a class="button" href="{{ url_for('main.export_company', company_id=company.company_id, format='txt') }}">
+                VC Memo
+            </a>
+        </div>
+
+
 
 
 
@@ -225,36 +241,6 @@
             </div>
         </section>
 
-        <!-- ========================================= -->
-        <!-- STRATEGISCHE WIJZIGINGEN (CHANGE EVENTS) -->
-        <!-- ========================================= -->
-
-        <section class="card soft-shadow fade-in" style="margin-top: 25px;">
-            <div class="card-header">
-                <h2 class="card-title">Strategische wijzigingen</h2>
-                <div class="card-meta">Nieuwe features, pricing updates, productlanceringen...</div>
-            </div>
-
-            <div class="card-body">
-
-                {% if events and events|length > 0 %}
-                    <ul class="soft-list">
-                        {% for e in events %}
-                            <li style="margin-bottom: 8px;">
-                                <strong>{{ e.event_type }}</strong><br>
-                                {{ e.description }}<br>
-                                <span class="badge-soft">{{ e.detected_at.strftime('%Y-%m-%d') }}</span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="subtitle">Geen strategische wijzigingen gedetecteerd.</p>
-                {% endif %}
-
-            </div>
-        </section>
-
-
 
         <!-- =============================================================== -->
         <!-- BLOCK 10: TRACTION SIGNALS -->
@@ -266,6 +252,42 @@
             </div>
             <div class="card-body">
                 <p>{{ company.traction_signals or "Geen signalen" }}</p>
+            </div>
+        </section>
+
+        <!-- ========================================= -->
+        <!-- STRATEGISCHE WIJZIGINGEN (TOP 3 + MEER) -->
+        <!-- ========================================= -->
+
+        <section class="card soft-shadow fade-in" style="margin-top: 20px;">
+            <div class="card-header">
+                <h2 class="card-title">Strategische wijzigingen</h2>
+                <div class="card-meta">Automatisch gedetecteerde veranderingen</div>
+            </div>
+
+            <div class="card-body">
+
+                {% if events and events|length > 0 %}
+                    <ul class="soft-list">
+                        {% for e in events[:3] %}
+                            <li style="margin-bottom: 8px;">
+                                <strong>{{ e.event_type }}</strong><br>
+                                {{ e.description }}<br>
+                                <span class="badge-soft">{{ e.detected_at.strftime('%Y-%m-%d') }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    {% if events|length > 3 %}
+                        <a href="{{ url_for('main.company_alerts', company_id=company.company_id) }}"
+                        class="button" style="margin-top:10px;">
+                            Bekijk alle wijzigingen →
+                        </a>
+                    {% endif %}
+
+                {% else %}
+                    <p class="subtitle">Geen wijzigingen gedetecteerd.</p>
+                {% endif %}
             </div>
         </section>
 

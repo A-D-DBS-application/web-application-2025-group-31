@@ -164,35 +164,33 @@
         <section class="card card-muted soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Recente meldingen</h2>
-                <div class="card-meta">Strategische updates van alle bedrijven</div>
+                <div class="card-meta">Strategische updates</div>
             </div>
 
             <div class="card-body">
 
                 {% if alerts %}
                     <ul class="soft-list">
-                        {% for a in alerts %}
-                            <li style="margin-bottom: 10px;">
-                                <strong>{{ a.type }}</strong>
-
-                                {% if a.company_id %}
-                                    — 
-                                    <a href="{{ url_for('main.company_detail', company_id=a.company_id) }}">
-                                        {{ a.description }}
-                                    </a>
-                                {% else %}
-                                    — {{ a.description }}
-                                {% endif %}
-
-                                <br>
-
-                                <span class="badge-soft">{{ a.time.strftime('%Y-%m-%d') }}</span>
-                                <br>
-
-                                <span class="subtitle">Bedrijf: {{ a.company_name }}</span>
-                            </li>
-                        {% endfor %}
+                    {% for a in alerts %}
+                        <li style="margin-bottom: 10px;">
+                            <strong>{{ a.type }}</strong> —
+                            <a href="{{ url_for('main.company_detail', company_id=a['company_id']) }}">
+                                {{ a.description }}
+                            </a>
+                            <br>
+                            <span class="badge-soft">{{ a.time.strftime('%Y-%m-%d') }}</span>
+                        </li>
+                    {% endfor %}
                     </ul>
+
+                    {% if more_alerts_count > 0 %}
+                    <div style="margin-top:8px;">
+                        <a class="button" href="{{ url_for('main.all_alerts') }}">
+                            Meer meldingen ({{ more_alerts_count }})
+                        </a>
+                    </div>
+                    {% endif %}
+
                 {% else %}
                     <p class="subtitle">Geen nieuwe meldingen.</p>
                 {% endif %}

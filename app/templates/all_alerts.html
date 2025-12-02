@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Alle meldingen | Rival</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar soft-shadow">
+        <div>
+            <h2>RIVAL</h2>
+            <div class="sidebar-tagline">Competitive intelligence</div>
+        </div>
+
+        <nav>
+            <a href="{{ url_for('main.dashboard') }}">
+                <span class="label"><span class="dot"></span><span>Dashboard</span></span>
+            </a>
+
+            <a href="{{ url_for('main.watchlist') }}">
+                <span class="label"><span class="dot"></span><span>Watchlist</span></span>
+            </a>
+
+            <a href="{{ url_for('main.companies') }}">
+                <span class="label"><span class="dot"></span><span>Bedrijven</span></span>
+            </a>
+
+            <a href="{{ url_for('main.all_alerts') }}" class="active">
+                <span class="label"><span class="dot"></span><span>Meldingen</span></span>
+            </a>
+
+            <a href="{{ url_for('main.logout') }}">
+                <span class="label"><span class="dot"></span><span>Uitloggen</span></span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">Strategische signalen</div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="content fade-in">
+
+        <!-- TOP BAR -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <h1>Alle strategische meldingen</h1>
+                <p class="subtitle">
+                    Volledige historiek van veranderingen: pricing, features, product line updates, enz.
+                </p>
+            </div>
+        </div>
+
+        <a href="{{ url_for('main.dashboard') }}" class="button" style="margin-bottom:14px;">
+            ← Terug naar dashboard
+        </a>
+
+        <!-- ALERTS LIST -->
+        <section class="card soft-shadow fade-in">
+
+            <div class="card-header">
+                <h2 class="card-title">Meldingen</h2>
+                <div class="card-meta">Alle gedetecteerde veranderingen, gesorteerd van nieuw naar oud.</div>
+            </div>
+
+            <div class="card-body">
+
+                {% if alerts %}
+                    <ul class="soft-list">
+                        {% for a in alerts %}
+                            <li style="margin-bottom:16px;">
+
+                                <!-- Event type -->
+                                <strong>{{ a["type"] }}</strong> —
+
+                                <!-- Link naar bedrijf -->
+                                <a href="{{ url_for('main.company_detail', company_id=a['company_id']) }}">
+                                    {{ a["description"] }}
+                                </a>
+
+                                <br>
+
+                                <!-- Datum -->
+                                <span class="badge-soft">
+                                    {{ a["time"].strftime('%Y-%m-%d %H:%M') }}
+                                </span>
+
+                                <!-- Company name -->
+                                <div class="subtitle">Bedrijf: {{ a["company"] }}</div>
+
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                {% else %}
+                    <p class="subtitle">Er zijn nog geen strategische wijzigingen gedetecteerd.</p>
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </main>
+</div>
+</body>
+</html>
+
+

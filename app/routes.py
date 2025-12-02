@@ -179,35 +179,36 @@ def dashboard():
     all_companies = Company.query.all()
 
     # ----------------------------------------------------
-    # CHANGE EVENTS → OMZETTEN NAAR NETTE DICTIONARY OBJECTEN
+    # CHANGE EVENTS → MAX 3 + MEER-LINK
     # ----------------------------------------------------
     recent_events_raw = ChangeEvent.query.order_by(
         ChangeEvent.detected_at.desc()
-    ).limit(8).all()
+    ).limit(3).all()
 
     alerts = []
     for e in recent_events_raw:
         company = Company.query.get(e.company_id)
         alerts.append({
-            "company_name": company.name if company else "Onbekend bedrijf",
-            "company_id": company.company_id if company else None,
+            "id": e.event_id,
+            "company_id": e.company_id,
+            "company": company.name if company else "Onbekend bedrijf",
             "type": e.event_type,
             "description": e.description,
             "time": e.detected_at
         })
-
 
     return render_template(
         'dashboard.html',
         user=user,
         scrape_result=scrape_result,
         watchlist=[c.name for c in companies_watchlist],
-        alerts=alerts,                       # <-- GEEN nested list meer
+        alerts=alerts,
         metric_options=METRIC_OPTIONS,
         metrics_selected=metrics_selected,
-        companies=all_companies
+        companies=all_companies,
+        more_alerts_count=max(0, ChangeEvent.query.count() - 3)
     )
-
+  
 
 # =====================================================
 # COMPANY DETAIL
@@ -227,6 +228,22 @@ def company_detail(company_id):
 
     return render_template('company_detail.html', company=company, events=events)
 
+@bp.route('/company/<int:company_id>/alerts')
+def company_alerts(company_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    company = Company.query.get_or_404(company_id)
+
+    events = ChangeEvent.query.filter_by(company_id=company_id) \
+        .order_by(ChangeEvent.detected_at.desc()) \
+        .all()
+
+    return render_template(
+        'all_alerts.html',
+        company=company,
+        events=events
+    )
 
 
 # =====================================================
@@ -383,6 +400,87 @@ def companies():
 
     all_companies = Company.query.all()
     return render_template('companies.html', companies=all_companies, message=message)
+
+# =====================================================
+# EXPORT: One-click company profile (VC analyst)
+# =====================================================
+
+@bp.route('/company/<int:company_id>/export')
+def export_company(company_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    c = Company.query.get_or_404(company_id)
+    format = request.args.get("format", "json").lower()
+
+    profile = {
+        "company_name": c.name,
+        "website": c.website_url,
+        "headquarters": c.headquarters,
+        "office_locations": c.office_locations,
+        "team_size": c.team_size,
+        "funding": c.funding,
+        "funding_history": c.funding_history,
+        "value_proposition": c.value_proposition,
+        "product_description": c.product_description,
+        "target_segment": c.target_segment,
+        "pricing": c.pricing,
+        "key_features": c.key_features,
+        "competitors": c.competitors,
+        "traction_signals": c.traction_signals,
+        "ai_summary": c.ai_summary,
+        "created_at": c.created_at
+    }
+
+    # JSON export
+    if format == "json":
+        return jsonify(profile)
+
+    # CSV export (flat)
+    if format == "csv":
+        import csv, io
+        output = io.StringIO()
+        writer = csv.writer(output)
+        for k, v in profile.items():
+            writer.writerow([k, v])
+        output.seek(0)
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={c.name}_profile.csv"}
+        )
+
+    # Plain-text due-diligence memo
+    if format == "txt":
+        memo = []
+        memo.append(f"=== DUE DILIGENCE PROFILE: {c.name} ===\n")
+        memo.append(f"Website: {c.website_url}\n")
+        memo.append(f"HQ: {c.headquarters}\n")
+        memo.append(f"Office locations: {c.office_locations}\n")
+        memo.append(f"Team size: {c.team_size}\n")
+        memo.append(f"Funding: {c.funding}\n")
+        memo.append(f"Funding history: {c.funding_history}\n")
+        memo.append("\n--- PRODUCT & MARKET ---\n")
+        memo.append(f"Value proposition: {c.value_proposition}\n")
+        memo.append(f"Product description: {c.product_description}\n")
+        memo.append(f"Target segment: {c.target_segment}\n")
+        memo.append(f"Pricing: {c.pricing}\n")
+        memo.append("\nKey Features:\n")
+        memo.extend([f" - {k}" for k in (c.key_features or [])])
+        memo.append("\nCompetitors:\n")
+        memo.extend([f" - {k}" for k in (c.competitors or [])])
+        memo.append("\nTraction signals:\n")
+        memo.append(c.traction_signals or "Geen signalen")
+        memo.append("\nAI summary:\n")
+        memo.append(c.ai_summary or "")
+
+        return Response(
+            "\n".join(memo),
+            mimetype="text/plain",
+            headers={"Content-Disposition": f"attachment; filename={c.name}_memo.txt"}
+        )
+
+    return "Unsupported format", 400
 
 
 # =====================================================
@@ -575,3 +673,36 @@ def update_weekly_mail():
     db.session.commit()
 
     return redirect(url_for("main.weekly_mail_settings"))
+
+# =====================================================
+# ALL ALERTS PAGE
+# =====================================================
+
+@bp.route("/all-alerts")
+def all_alerts():
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    # Haal ALLE events op (niet limiteren!)
+    events = ChangeEvent.query.order_by(
+        ChangeEvent.detected_at.desc()
+    ).all()
+
+    alerts = []
+    for e in events:
+        company = Company.query.get(e.company_id)
+        alerts.append({
+            "company_id": e.company_id,
+            "company": company.name if company else "Onbekend bedrijf",
+            "type": e.event_type,
+            "description": e.description,
+            "time": e.detected_at
+        })
+
+    return render_template(
+        "all_alerts.html",
+        alerts=alerts,
+        company=None   # omdat dit GEEN bedrijf-specifiek overzicht is
+    )
+
+
