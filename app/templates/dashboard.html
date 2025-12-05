@@ -11,9 +11,9 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar soft-shadow">
-        <div>
+        <div class="sidebar-header">
             <h2>RIVAL</h2>
-            <div class="sidebar-tagline">Competitive intelligence</div>
+            <div class="sidebar-tagline">Competitive Intelligence</div>
         </div>
 
         <nav>
@@ -39,100 +39,110 @@
         </nav>
 
         <div class="sidebar-footer">
-            Rival · v0.1 · Internal demo
+            Rival · v0.1 · Internal Demo
         </div>
     </aside>
 
-    <!-- MAIN -->
+
+    <!-- MAIN CONTENT -->
     <main class="content fade-in">
 
-        <!-- TOP BAR -->
-        <div class="topbar">
-            <div class="topbar-left">
-                <h1>Intelligence Dashboard</h1>
-                <p class="subtitle">Start nieuwe analyses, beheer je watchlist en bekijk recente signalen.</p>
-            </div>
-        </div>
-
-        <!-- STATISTIEKEN -->
-        <div class="grid-3">
-            <div class="stat-card">
-                <div class="stat-label">Geanalyseerde websites</div>
-                <div class="stat-value">–</div>
-                <div class="stat-trend">Supabase-sync in volgende fase</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-label">Actieve watchlist</div>
-                <div class="stat-value">{{ watchlist|length if watchlist else 0 }}</div>
-                <div class="stat-trend">Handmatige selectie</div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-label">Ongelezen alerts</div>
-                <div class="stat-value">{{ alerts|length if alerts else 0 }}</div>
-                <div class="stat-trend">Strategische changes</div>
-            </div>
-        </div>
-
-        <!-- NIEUWE ANALYSE -->
-        <section class="card soft-shadow fade-in" style="margin-bottom:20px;">
-            <div class="card-header">
-                <h2 class="card-title">Nieuwe Websiteanalyse</h2>
-                <div class="card-meta">Rival genereert automatisch een baseline rapport.</div>
-            </div>
-            <div class="card-body">
-                <a href="{{ url_for('main.scrape') }}" class="button full">
-                    Nieuwe analyse starten →
-                </a>
-            </div>
+        <!-- PAGE HEADER (Similarweb-stijl) -->
+        <section class="page-header" style="margin-bottom:30px;">
+            <h1 class="page-title">Intelligence Dashboard</h1>
+            <p class="subtitle" style="max-width:650px;">
+                Start nieuwe analyses, beheer je watchlist en volg strategische marktbewegingen.
+                Dit overzicht vormt jouw centrale hub voor competitieve inzichten.
+            </p>
         </section>
 
-        <!-- WATCHLIST -->
-        <section class="card card-muted soft-shadow fade-in">
+
+        <!-- QUICK ACTIONS: zoals Similarweb, maar met jouw bestaande functies -->
+        <section class="grid-3 fade-in" style="margin-bottom:35px;">
+
+            <!-- Nieuwe Analyse -->
+            <div class="card soft-shadow" style="padding:22px;">
+                <h3 class="card-title">Nieuwe Analyse</h3>
+                <p class="subtitle">
+                    Genereer automatisch een baseline-rapportage op basis van een bedrijfswebsite.
+                </p>
+                <a href="{{ url_for('main.scrape') }}" class="button small">Start analyse</a>
+            </div>
+
+            <!-- Watchlist -->
+            <div class="card soft-shadow" style="padding:22px;">
+                <h3 class="card-title">Watchlist</h3>
+                <p class="subtitle">
+                    Overzicht van alle bedrijven die je actief opvolgt.
+                </p>
+                <a href="{{ url_for('main.watchlist') }}" class="button small">Bekijk watchlist</a>
+            </div>
+
+            <!-- Configuratie -->
+            <div class="card soft-shadow" style="padding:22px;">
+                <h3 class="card-title">Configuratie</h3>
+                <p class="subtitle">
+                    Selecteer bedrijven, metrics en competitors voor opvolging.
+                </p>
+                <a href="#config" class="button small">Open instellingen</a>
+            </div>
+
+        </section>
+
+
+        <!-- WATCHLIST Overview - Similarweb-achtige presentatie -->
+        <section class="card soft-shadow fade-in" style="margin-bottom:35px;">
             <div class="card-header">
                 <h2 class="card-title">Watchlist</h2>
-                <div class="card-meta">Je gevolgde bedrijven.</div>
+                <div class="card-meta">Bedrijven die je actief opvolgt</div>
             </div>
 
             <div class="card-body">
                 {% if watchlist %}
                     <ul class="soft-list">
                         {% for item in watchlist %}
-                            <li>{{ item }}</li>
+                        <li>{{ item }}</li>
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <p class="subtitle">Nog geen bedrijven in watchlist.</p>
+                    <div class="empty-state">
+                        <h3>Geen bedrijven in watchlist</h3>
+                        <p class="subtitle">Voeg bedrijven toe om strategische signalen te monitoren.</p>
+                        <a href="{{ url_for('main.companies') }}" class="button small">Bedrijven beheren</a>
+                    </div>
                 {% endif %}
             </div>
         </section>
 
-        <!-- CONFIG BLOCK -->
-        <section class="card soft-shadow fade-in" style="margin-top:20px;">
+
+        <!-- CONFIGURATION PANEL -->
+        <section id="config" class="card soft-shadow fade-in" style="margin-bottom:35px;">
             <div class="card-header">
-                <h2 class="card-title">Configureer Watchlist & Competitors</h2>
-                <div class="card-meta">Selecteer bedrijven, metrics én competitors.</div>
+                <h2 class="card-title">Watchlist & Competitor Tracking</h2>
+                <div class="card-meta">
+                    Configureer welke bedrijven, metrics en concurrenten Rival moet volgen.
+                </div>
             </div>
 
             <div class="card-body">
-                
+
                 <!-- WATCHLIST CONFIG -->
-                <form method="POST" style="margin-bottom: 20px;">
+                <form method="POST" style="margin-bottom:30px;">
                     <input type="hidden" name="form_type" value="watchlist_config">
+
                     <h3>Watchlist instellingen</h3>
 
                     <div class="grid-2">
 
-                        <!-- COMPANIES -->
+                        <!-- Bedrijven -->
                         <div>
                             <h4>Bedrijven</h4>
-                            <ul class="soft-list" style="max-height:180px; overflow:auto;">
+                            <ul class="soft-list" style="max-height:200px; overflow:auto;">
                                 {% for c in companies %}
                                 <li>
-                                    <label style="display:flex;gap:6px;">
+                                    <label class="checkbox-line">
                                         <input type="checkbox" name="companies" value="{{ c.company_id }}"
-                                            {% if c.company_id in session.get('watchlist_companies',[]) %}checked{% endif %}>
+                                            {% if c.company_id in session.get('watchlist_companies', []) %}checked{% endif %}>
                                         {{ c.name }}
                                     </label>
                                 </li>
@@ -140,13 +150,13 @@
                             </ul>
                         </div>
 
-                        <!-- METRICS -->
+                        <!-- Metrics -->
                         <div>
                             <h4>Metrics</h4>
-                            <ul class="soft-list" style="max-height:180px; overflow:auto;">
+                            <ul class="soft-list" style="max-height:200px; overflow:auto;">
                                 {% for m in metric_options %}
                                 <li>
-                                    <label style="display:flex;gap:6px;">
+                                    <label class="checkbox-line">
                                         <input type="checkbox" name="metrics" value="{{ m }}"
                                             {% if m in metrics_selected %}checked{% endif %}>
                                         {{ m }}
@@ -158,23 +168,23 @@
 
                     </div>
 
-                    <button type="submit" class="button" style="margin-top:10px;">Opslaan</button>
+                    <button type="submit" class="button small" style="margin-top:10px;">Opslaan</button>
                 </form>
+
+
 
                 <!-- COMPETITOR CONFIG -->
                 <form method="POST">
                     <input type="hidden" name="form_type" value="competitor_config">
 
                     <h3>Competitor tracking</h3>
-                    <p class="subtitle">Selecteer welke competitors gevolgd moeten worden in alerts.</p>
+                    <p class="subtitle">Selecteer welke concurrenten Rival actief moet opvolgen.</p>
 
-                    <ul class="soft-list" style="max-height:200px; overflow:auto;">
-
+                    <ul class="soft-list" style="max-height:220px; overflow:auto;">
                         {% for comp in all_competitors %}
                         <li>
-                            <label style="display:flex;gap:6px;">
-                                <input type="checkbox" name="competitors"
-                                    value="{{ comp }}"
+                            <label class="checkbox-line">
+                                <input type="checkbox" name="competitors" value="{{ comp }}"
                                     {% if comp in competitors_selected %}checked{% endif %}>
                                 {{ comp }}
                             </label>
@@ -182,25 +192,26 @@
                         {% endfor %}
                     </ul>
 
-                    <button type="submit" class="button" style="margin-top:10px;">Opslaan</button>
+                    <button type="submit" class="button small" style="margin-top:10px;">Opslaan</button>
                 </form>
 
             </div>
         </section>
 
-        <!-- ALERTS -->
-        <section class="card card-muted soft-shadow fade-in">
+
+        <!-- ALERTS SECTION -->
+        <section class="card soft-shadow fade-in">
             <div class="card-header">
-                <h2 class="card-title">Recente meldingen</h2>
-                <div class="card-meta">Strategische updates</div>
+                <h2 class="card-title">Recente Meldingen</h2>
+                <div class="card-meta">Strategische updates op basis van jouw selectie</div>
             </div>
 
             <div class="card-body">
 
                 {% if alerts %}
                     <ul class="soft-list">
-                    {% for a in alerts %}
-                        <li style="margin-bottom: 10px;">
+                        {% for a in alerts %}
+                        <li style="margin-bottom: 12px;">
                             <strong>{{ a.type }}</strong> —
                             <a href="{{ url_for('main.company_detail', company_id=a['company_id']) }}">
                                 {{ a.description }}
@@ -208,20 +219,26 @@
                             <br>
                             <span class="badge-soft">{{ a.time.strftime('%Y-%m-%d') }}</span>
                         </li>
-                    {% endfor %}
+                        {% endfor %}
                     </ul>
 
                     {% if more_alerts_count > 0 %}
-                    <div style="margin-top:8px;">
-                        <a class="button" href="{{ url_for('main.all_alerts') }}">
+                    <div style="margin-top:10px;">
+                        <a href="{{ url_for('main.all_alerts') }}" class="button small">
                             Meer meldingen ({{ more_alerts_count }})
                         </a>
                     </div>
                     {% endif %}
 
                 {% else %}
-                    <p class="subtitle">Geen nieuwe meldingen.</p>
+                    <div class="empty-state">
+                        <h3>Geen recente meldingen</h3>
+                        <p class="subtitle">
+                            Nieuwe strategische signalen verschijnen automatisch in dit overzicht.
+                        </p>
+                    </div>
                 {% endif %}
+
             </div>
         </section>
 
@@ -229,6 +246,8 @@
 </div>
 </body>
 </html>
+
+
 
 
 
