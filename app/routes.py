@@ -70,6 +70,7 @@ def safe_float(x):
     except:
         return None
 
+
 def categorize_pricing_text(pricing_text: str):
     """
     Maak van pricing-tekst een eenvoudige prijsklasse.
@@ -139,17 +140,32 @@ def extract_positive_reviews(company):
 
 def format_funding_for_metric(company):
     """
-    Funding weergeven als numeric value + nette label-string.
-    Retourneert (numeric, label).
+    Funding voor de Metric-tabel.
+
+    - Als er een numeric funding in de DB staat → gebruik die en toon '€X'.
+    - Als er geen numeric is → gebruik tekst uit funding_history / AI als label.
+    - In alle gevallen krijgt Metric.value een simpel numeriek code (0 of bedrag).
     """
-    if company.funding is None:
-        return 0.0, "Onbekend"
-    try:
-        val = float(company.funding)
-        label = f"€{int(val):,}".replace(",", ".")
-        return val, label
-    except Exception:
-        return 0.0, str(company.funding)
+    # 1) Eerst proberen numeric funding
+    if company.funding is not None:
+        try:
+            val = float(company.funding)
+            label = f"€{int(val):,}".replace(",", ".")
+            return val, label
+        except Exception:
+            pass  # val lukt niet → we vallen door naar tekst
+
+    # 2) Geen numeric funding → probeer tekst te vinden
+    txt = (company.funding_history or "").strip()
+    if not txt:
+        # eventueel nog extra context gebruiken
+        txt = ((company.traction_signals or "") + " " + (company.ai_summary or "")).strip()
+
+    if not txt:
+        txt = "Onbekend"
+
+    # We geven hier 0.0 als numeric code, label = de tekst
+    return 0.0, txt
 
 
 def estimate_hiring_activity(company):
@@ -237,6 +253,7 @@ def update_company_metrics(company):
     m_hiring.description = hiring_label
     m_hiring.last_updated = datetime.utcnow()
 
+
 # =====================================================
 # INDEX
 # =====================================================
@@ -309,10 +326,10 @@ def logout():
     session.clear()
     return redirect(url_for('main.login'))
 
+
 # =====================================================
 # DASHBOARD
 # =====================================================
-
 
 @bp.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -337,7 +354,7 @@ def dashboard():
                 m for m in request.form.getlist('metrics') if m in METRIC_OPTIONS
             ]
 
-        # --- COMPETITOR CONFIG (NIEUW)
+        # --- COMPETITOR CONFIG
         elif form_type == 'competitor_config':
             session['tracked_competitors'] = request.form.getlist('competitors')
 
@@ -411,7 +428,6 @@ def dashboard():
         more_alerts_count=max(0, ChangeEvent.query.count() - 3)
     )
 
-  
 
 # =====================================================
 # COMPANY DETAIL
@@ -425,11 +441,12 @@ def company_detail(company_id):
     company = Company.query.get_or_404(company_id)
 
     # Alle wijzigingen voor dit bedrijf (nieuw → oud)
-    events = ChangeEvent.query.filter_by(company_id=company_id)\
-        .order_by(ChangeEvent.detected_at.desc())\
+    events = ChangeEvent.query.filter_by(company_id=company_id) \
+        .order_by(ChangeEvent.detected_at.desc()) \
         .all()
 
     return render_template('company_detail.html', company=company, events=events)
+
 
 @bp.route('/company/<int:company_id>/alerts')
 def company_alerts(company_id):
@@ -472,7 +489,7 @@ def watchlist():
     ids = session.get('watchlist_companies', [])
     try:
         ids = [int(cid) for cid in ids]
-    except:
+    except Exception:
         ids = []
 
     metrics_selected = session.get('watchlist_metrics', [])
@@ -480,29 +497,73 @@ def watchlist():
 
     comparison_rows = []
     for c in companies:
-        # Haal alle metrics voor dit bedrijf één keer op
-        metrics_for_company = Metric.query.filter_by(company_id=c.company_id, active=True).all()
-        metrics_by_name = {m.name.lower(): m for m in metrics_for_company}
-
         metric_values = {}
+
         for m_label in metrics_selected:
-            metric = metrics_by_name.get(m_label.lower())
-            if metric:
-                # We tonen description als die bestaat, anders de numeric value
-                if metric.description:
-                    display = metric.description
-                elif metric.value is not None:
-                    display = str(metric.value)
+            label_lower = m_label.lower()
+
+            # Haal eventueel een bijhorende Metric op
+            metric = (
+                Metric.query
+                .filter(
+                    Metric.company_id == c.company_id,
+                    db.func.lower(Metric.name) == label_lower
+                )
+                .order_by(Metric.last_updated.desc())
+                .first()
+            )
+
+            # -----------------------------
+            # SPECIALE CASE: PRICING
+            # -----------------------------
+            if label_lower == "pricing":
+                company_pricing = (c.pricing or "").strip()
+
+                # Categorie uit Metric (bijv. "Lage prijsklasse")
+                metric_label = None
+                if metric:
+                    if metric.description and metric.description.strip().lower() != "onbekend":
+                        metric_label = metric.description.strip()
+                    # → FIX: toon '0' NIET
+                    elif metric.value is not None and metric.value != 0:
+                        metric_label = str(metric.value)
+
+                # Combineer categorie + tekst, MAAR ‘0 – ...’ mag niet meer voorkomen
+                if company_pricing and metric_label:
+                    display = f"{metric_label} – {company_pricing}"
+                elif company_pricing:
+                    display = company_pricing
+                elif metric_label:
+                    display = metric_label
                 else:
-                    display = "–"
+                    display = "Onbekend"
+
+
+            # -----------------------------
+            # ANDERE METRICS
+            # -----------------------------
             else:
-                display = "–"
+                if metric and (metric.description or metric.value is not None):
+                    # Gebruik description als die bestaat, anders numeric value
+                    display = metric.description or str(metric.value)
+                else:
+                    # Fallback op basis van company-velden
+                    if label_lower == "features":
+                        _, display = features_from_company(c)
+                    elif label_lower == "reviews":
+                        _, display = extract_positive_reviews(c)
+                    elif label_lower == "funding":
+                        _, display = format_funding_for_metric(c)
+                    elif label_lower == "hiring":
+                        _, display = estimate_hiring_activity(c)
+                    else:
+                        display = "–"
 
             metric_values[m_label] = display
 
         comparison_rows.append({'company': c, 'metrics': metric_values})
 
-
+    # Audit logs per bedrijf
     logs_by_company = {
         c.company_id: AuditLog.query.filter_by(company_id=c.company_id)
         .order_by(AuditLog.retrieved_at.desc()).all()
@@ -516,6 +577,7 @@ def watchlist():
         companies=companies,
         logs_by_company=logs_by_company
     )
+
 
 # =====================================================
 # EXPORT WATCHLIST AUDIT (CSV / JSON)
@@ -532,7 +594,10 @@ def export_watchlist_audit():
     if not ids:
         return "Geen bedrijven in watchlist.", 400
 
-    ids = [int(cid) for cid in ids]
+    try:
+        ids = [int(cid) for cid in ids]
+    except Exception:
+        return "Ongeldige watchlist IDs.", 400
 
     logs = (
         AuditLog.query
@@ -541,7 +606,7 @@ def export_watchlist_audit():
         .all()
     )
 
-    # ---------------------- JSON EXPORT ----------------------
+    # JSON export
     if fmt == "json":
         out = []
         for log in logs:
@@ -554,7 +619,7 @@ def export_watchlist_audit():
             })
         return jsonify(out)
 
-    # ---------------------- CSV EXPORT ----------------------
+    # CSV export
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["Company", "Source Name", "Source URL", "Retrieved At"])
@@ -573,6 +638,7 @@ def export_watchlist_audit():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=audit_export.csv"}
     )
+
 
 # =====================================================
 # COMPANIES OVERVIEW
@@ -622,6 +688,7 @@ def companies():
     all_companies = Company.query.all()
     return render_template('companies.html', companies=all_companies, message=message)
 
+
 # =====================================================
 # EXPORT: One-click company profile (VC analyst)
 # =====================================================
@@ -659,7 +726,6 @@ def export_company(company_id):
 
     # CSV export (flat)
     if format == "csv":
-        import csv, io
         output = io.StringIO()
         writer = csv.writer(output)
         for k, v in profile.items():
@@ -808,7 +874,6 @@ def scrape():
                 description=ev["description"]
             ))
 
-
         # ----------------------------------------
         # 2) UPDATE BEDRIJFSGEGEVENS
         # ----------------------------------------
@@ -837,7 +902,6 @@ def scrape():
         db.session.commit()
 
         return redirect(url_for('main.company_detail', company_id=existing.company_id))
-
 
     # ============================================
     # NIEUW BEDRIJF
@@ -903,6 +967,7 @@ def audit_logs():
 
     return render_template("audit_logs.html", logs=enriched_logs)
 
+
 @bp.route('/audit-logs/export')
 def export_all_audit_logs():
     if "user_id" not in session:
@@ -926,7 +991,6 @@ def export_all_audit_logs():
         return jsonify(out)
 
     # CSV export
-    import csv, io
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["Company", "Source Name", "Source URL", "Retrieved At"])
@@ -971,6 +1035,7 @@ def update_weekly_mail():
 
     return redirect(url_for("main.weekly_mail_settings"))
 
+
 # =====================================================
 # ALL ALERTS PAGE
 # =====================================================
@@ -999,7 +1064,8 @@ def all_alerts():
     return render_template(
         "all_alerts.html",
         alerts=alerts,
-        company=None   # omdat dit GEEN bedrijf-specifiek overzicht is
+        company=None   # algemene historiek, niet per bedrijf
     )
+
 
 

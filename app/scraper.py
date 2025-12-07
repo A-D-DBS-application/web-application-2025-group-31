@@ -90,9 +90,29 @@ def _empty_ai_result(ai_summary: str = ""):
 # ==========================================================
 def ask_ai_for_company_info(url, title, text):
     prompt = f"""
-You extract business fundamentals from messy website text.
+You are an expert in extracting business fundamentals from messy website text.
 
-Keep all previous behavior, but EXPAND your logic as follows:
+Be extremely proactive and AGGRESSIVE about detecting HEADQUARTERS and OFFICE LOCATIONS and TEAM SIZE and FUNDING and FUNDING_HISTORY.
+You MUST extract them even if they are only implicitly mentioned.
+
+===========================================================
+TEAM SIZE detection rules
+===========================================================
+- Detect phrases like “team of 120”, “we are 30 people”, “over 200 employees”.
+- Detect synonyms: staff, colleagues, consultants, workforce, headcount.
+- Detect ranges: “over 50 experts”, “10+ engineers”, “200+ employees”.
+- If the firm is clearly small (boutique agency), infer 5–30.
+- If the firm is clearly established (30+ years old), infer 30–200.
+- Always return an INTEGER if possible. Otherwise return the closest plausible estimate.
+
+===========================================================
+FUNDING detection rules (base behavior)
+===========================================================
+- Capture ANY number tied to financing including: “€5M”, “5 million”, “Series A / B / Seed”.
+- If the company is clearly private & consultancy-based:
+  infer “No external funding (privately held)” instead of empty.
+- Accept guesses based on domain (e.g. consulting firms rarely raise VC).
+- Never return an empty string unless absolutely no inference is possible.
 
 ===========================================================
 PRICING (enhanced rules)
@@ -124,7 +144,7 @@ Return a short human-friendly phrase, e.g.:
   "Geen reviews gevonden"
 
 ===========================================================
-FUNDING (enhanced rules)
+FUNDING (enhanced inference layer)
 ===========================================================
 If funding is explicitly stated (e.g., “€5M seed”, “Series A”):
   → Extract exactly.
@@ -135,23 +155,12 @@ If NOT stated:
         • SaaS startups → "Likely early-stage (<€5M)"
         • Large known brands → "Likely well-funded or corporate-backed"
         • Non-profits or institutions → "Publicly funded or donor-based"
-  → Never return an empty string.
+  → Never return an empty string if you can reasonably infer something.
 
 ===========================================================
-TEAM SIZE / HIRING
+WHAT YOU MUST RETURN
 ===========================================================
-Use word patterns:
-- "team of 120", "over 50 experts", "200+ employees"
-- If ambiguous, infer:
-    Boutique agency → 5–30
-    Growing B2B SaaS → 10–80
-    Large brand → 100+
-
-Return an INTEGER where possible.
-
-===========================================================
-RETURN STRICT JSON ONLY WITH EXACTLY THESE FIELDS
-===========================================================
+Return STRICT JSON ONLY with EXACTLY these fields:
 
 {{
   "ai_summary": "",
@@ -320,6 +329,7 @@ if __name__ == "__main__":
     print("Scraping test URL:", test_url)
     result = scrape_website(test_url)
     print(json.dumps(result, indent=2, ensure_ascii=False))
+
 
 
 
