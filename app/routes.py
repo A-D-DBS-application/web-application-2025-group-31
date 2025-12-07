@@ -1177,5 +1177,63 @@ def all_alerts():
         company=None   # algemene historiek, niet per bedrijf
     )
 
+# =====================================================
+# API: FEED VAN ALLE CHANGE EVENTS (voor BI / analytics)
+# =====================================================
+
+@bp.route("/api/events")
+def api_events():
+    """
+    JSON feed van alle gedetecteerde events:
+    - pricing changes
+    - feature changes
+    - (later) funding, hiring, segment changes, geo-expansion...
+    Optionele filters:
+      ?company_id=...
+      ?type=pricing_change
+      ?since=2025-12-01
+    """
+
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Basis query
+    query = ChangeEvent.query.join(Company, ChangeEvent.company_id == Company.company_id)
+
+    # --- Filters (optioneel) ---
+    company_id = request.args.get("company_id", type=int)
+    if company_id:
+        query = query.filter(ChangeEvent.company_id == company_id)
+
+    event_type = request.args.get("type")
+    if event_type:
+        query = query.filter(ChangeEvent.event_type == event_type)
+
+    since_str = request.args.get("since")  # verwacht vorm 'YYYY-MM-DD'
+    if since_str:
+        try:
+            since_date = datetime.fromisoformat(since_str)
+            query = query.filter(ChangeEvent.detected_at >= since_date)
+        except ValueError:
+            # Als de datum fout is, negeren we de filter gewoon
+            pass
+
+    # Sorteer nieuw → oud
+    events = query.order_by(ChangeEvent.detected_at.desc()).all()
+
+    # Bouw JSON payload
+    out = []
+    for e in events:
+        company = Company.query.get(e.company_id)
+        out.append({
+            "event_id": e.event_id,
+            "company_id": e.company_id,
+            "company_name": company.name if company else "Onbekend",
+            "event_type": e.event_type,
+            "description": e.description,
+            "detected_at": e.detected_at.isoformat() if e.detected_at else None
+        })
+
+    return jsonify(out)
 
 
