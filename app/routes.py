@@ -5,6 +5,7 @@ from app.models import AppUser, Company, Metric, AuditLog, ChangeEvent
 import csv
 import io
 from app.scraper import scrape_website
+from datetime import datetime
 
 bp = Blueprint('main', __name__)
 
@@ -69,6 +70,172 @@ def safe_float(x):
     except:
         return None
 
+def categorize_pricing_text(pricing_text: str):
+    """
+    Maak van pricing-tekst een eenvoudige prijsklasse.
+    Retourneert (code, label):
+    - code → naar Metric.value
+    - label → naar Metric.description
+    """
+    if not pricing_text:
+        return 0, "Onbekend"
+
+    text = pricing_text.lower()
+
+    # Gratis / freemium
+    if "free" in text or "gratis" in text:
+        return 1, "Gratis / Freemium"
+
+    # Simpele nummerdetectie (eerste bedrag in de tekst)
+    nums = re.findall(r"(\d+(?:[.,]\d+)?)", text)
+    if nums:
+        try:
+            val = float(nums[0].replace(",", "."))
+            if val < 30:
+                return 2, "Lage prijsklasse"
+            elif val < 100:
+                return 3, "Midden segment"
+            else:
+                return 4, "Hoge prijsklasse"
+        except ValueError:
+            pass
+
+    # Keywords als fallback
+    if "enterprise" in text:
+        return 5, "Enterprise"
+    if "pro" in text or "business" in text:
+        return 3, "Midden / Pro"
+
+    return 0, "Onbekend"
+
+
+def features_from_company(company):
+    """
+    Retourneert (aantal_features, 'feature1, feature2, ...').
+    Gebaseerd op company.key_features uit het baseline report.
+    """
+    if company.key_features:
+        features = [str(f) for f in company.key_features]
+        return len(features), ", ".join(features)
+    return 0, "Geen features"
+
+
+def extract_positive_reviews(company):
+    """
+    Heel eenvoudige schatting van positieve reviews.
+    Zoekt bv. '123 reviews' in traction_signals / ai_summary.
+    Retourneert (aantal, label-tekst).
+    """
+    text = ((company.traction_signals or "") + " " + (company.ai_summary or "")).lower()
+    matches = re.findall(r"(\d+)\s*\+?\s*(?:reviews|review)", text)
+    if matches:
+        try:
+            n = int(matches[0])
+            return n, f"{n} positieve reviews (geschat)"
+        except ValueError:
+            return 0, "Geen reviews gevonden"
+    return 0, "Geen reviews gevonden"
+
+
+def format_funding_for_metric(company):
+    """
+    Funding weergeven als numeric value + nette label-string.
+    Retourneert (numeric, label).
+    """
+    if company.funding is None:
+        return 0.0, "Onbekend"
+    try:
+        val = float(company.funding)
+        label = f"€{int(val):,}".replace(",", ".")
+        return val, label
+    except Exception:
+        return 0.0, str(company.funding)
+
+
+def estimate_hiring_activity(company):
+    """
+    Eenvoudige indicatie van hiring-activiteit.
+    Geeft (code, label) terug.
+    """
+    text = ((company.traction_signals or "") +
+            " " + (company.product_description or "") +
+            " " + (company.ai_summary or "")).lower()
+
+    hiring_keywords = [
+        "we are hiring", "we're hiring", "join our team",
+        "vacatures", "open positions", "careers"
+    ]
+    if any(k in text for k in hiring_keywords):
+        return 3, "Actief aanwervend"
+
+    if company.team_size:
+        ts = company.team_size
+        if ts >= 200:
+            return 2, "Groot team (stabiele hiring)"
+        elif ts >= 30:
+            return 2, "Groeiend team"
+        elif ts < 30:
+            return 1, "Klein team"
+
+    return 0, "Onbekend"
+
+
+def get_or_create_metric(company_id: int, name: str):
+    """
+    Haal de metric op of maak ze als ze nog niet bestaat.
+    """
+    metric = Metric.query.filter_by(company_id=company_id, name=name).first()
+    if not metric:
+        metric = Metric(
+            company_id=company_id,
+            name=name,
+            active=True,
+            tracking_frequency="on_change"
+        )
+        db.session.add(metric)
+    return metric
+
+
+def update_company_metrics(company):
+    """
+    Vul/werk de 5 kernmetrics bij in de Metric-tabel
+    op basis van de huidige Company-waarden.
+    """
+
+    # 1) Pricing
+    price_code, price_label = categorize_pricing_text(company.pricing or "")
+    m_pricing = get_or_create_metric(company.company_id, "Pricing")
+    m_pricing.value = price_code
+    m_pricing.description = price_label
+    m_pricing.last_updated = datetime.utcnow()
+
+    # 2) Features
+    feat_count, feat_label = features_from_company(company)
+    m_feat = get_or_create_metric(company.company_id, "Features")
+    m_feat.value = feat_count
+    m_feat.description = feat_label
+    m_feat.last_updated = datetime.utcnow()
+
+    # 3) Reviews
+    rev_count, rev_label = extract_positive_reviews(company)
+    m_rev = get_or_create_metric(company.company_id, "Reviews")
+    m_rev.value = rev_count
+    m_rev.description = rev_label
+    m_rev.last_updated = datetime.utcnow()
+
+    # 4) Funding
+    fund_val, fund_label = format_funding_for_metric(company)
+    m_fund = get_or_create_metric(company.company_id, "Funding")
+    m_fund.value = fund_val
+    m_fund.description = fund_label
+    m_fund.last_updated = datetime.utcnow()
+
+    # 5) Hiring
+    hiring_code, hiring_label = estimate_hiring_activity(company)
+    m_hiring = get_or_create_metric(company.company_id, "Hiring")
+    m_hiring.value = hiring_code
+    m_hiring.description = hiring_label
+    m_hiring.last_updated = datetime.utcnow()
 
 # =====================================================
 # INDEX
@@ -271,14 +438,25 @@ def company_alerts(company_id):
 
     company = Company.query.get_or_404(company_id)
 
-    events = ChangeEvent.query.filter_by(company_id=company_id) \
-        .order_by(ChangeEvent.detected_at.desc()) \
-        .all()
+    events = (ChangeEvent.query
+              .filter_by(company_id=company_id)
+              .order_by(ChangeEvent.detected_at.desc())
+              .all())
+
+    alerts = []
+    for e in events:
+        alerts.append({
+            "company_id": e.company_id,
+            "company": company.name,
+            "type": e.event_type,
+            "description": e.description,
+            "time": e.detected_at
+        })
 
     return render_template(
         'all_alerts.html',
-        company=company,
-        events=events
+        alerts=alerts,
+        company=company
     )
 
 
@@ -302,21 +480,28 @@ def watchlist():
 
     comparison_rows = []
     for c in companies:
-        metric_values = {
-            m: (
-                Metric.query.filter(
-                    Metric.company_id == c.company_id,
-                    db.func.lower(Metric.name) == m.lower()
-                ).first().value
-                if Metric.query.filter(
-                    Metric.company_id == c.company_id,
-                    db.func.lower(Metric.name) == m.lower()
-                ).first()
-                else "–"
-            )
-            for m in metrics_selected
-        }
+        # Haal alle metrics voor dit bedrijf één keer op
+        metrics_for_company = Metric.query.filter_by(company_id=c.company_id, active=True).all()
+        metrics_by_name = {m.name.lower(): m for m in metrics_for_company}
+
+        metric_values = {}
+        for m_label in metrics_selected:
+            metric = metrics_by_name.get(m_label.lower())
+            if metric:
+                # We tonen description als die bestaat, anders de numeric value
+                if metric.description:
+                    display = metric.description
+                elif metric.value is not None:
+                    display = str(metric.value)
+                else:
+                    display = "–"
+            else:
+                display = "–"
+
+            metric_values[m_label] = display
+
         comparison_rows.append({'company': c, 'metrics': metric_values})
+
 
     logs_by_company = {
         c.company_id: AuditLog.query.filter_by(company_id=c.company_id)
@@ -644,9 +829,15 @@ def scrape():
         existing.key_features = result.get("key_features")
         existing.competitors = result.get("competitors")
 
+        # ----------------------------------------
+        # 3) METRICS UPDATEN IN SUPABASE
+        # ----------------------------------------
+        update_company_metrics(existing)
+
         db.session.commit()
 
         return redirect(url_for('main.company_detail', company_id=existing.company_id))
+
 
     # ============================================
     # NIEUW BEDRIJF
@@ -672,7 +863,7 @@ def scrape():
     )
 
     db.session.add(new_company)
-    db.session.flush()
+    db.session.flush()  # zodat new_company.company_id bestaat
 
     db.session.add(AuditLog(
         company_id=new_company.company_id,
@@ -680,9 +871,13 @@ def scrape():
         source_url=url
     ))
 
+    # METRICS AANMAKEN VOOR DIT NIEUWE BEDRIJF
+    update_company_metrics(new_company)
+
     db.session.commit()
 
     return redirect(url_for('main.company_detail', company_id=new_company.company_id))
+
 
 # =====================================================
 # GLOBAL AUDIT LOG OVERVIEW (Compliance)

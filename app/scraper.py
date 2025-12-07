@@ -65,31 +65,93 @@ CONTENT:
 
 
 # ==========================================================
+# Helper voor default AI-resultaat
+# ==========================================================
+def _empty_ai_result(ai_summary: str = ""):
+    return {
+        "ai_summary": ai_summary,
+        "value_proposition": "",
+        "product_description": "",
+        "target_segment": "",
+        "pricing": "",
+        "key_features": [],
+        "competitors": [],
+        "headquarters": "",
+        "office_locations": "",
+        "team_size": None,
+        "funding": "",
+        "funding_history": "",
+        "traction_signals": "",
+    }
+
+
+# ==========================================================
 # 3. AI BUSINESS FUNDAMENTALS EXTRACTION
 # ==========================================================
 def ask_ai_for_company_info(url, title, text):
     prompt = f"""
-You are an expert in extracting business fundamentals from messy website text.
+You extract business fundamentals from messy website text.
 
-Be extremely proactive and AGGRESSIVE about detecting HEADQUARTERS and OFFICE LOCATIONS and TEAM SIZE and FUNDING and FUNDING_HISTORY.
-You MUST extract them even if they are only implicitly mentioned.
+Keep all previous behavior, but EXPAND your logic as follows:
 
-TEAM SIZE detection rules:
-- Detect phrases like “team of 120”, “we are 30 people”, “over 200 employees”.
-- Detect synonyms: staff, colleagues, consultants, workforce, headcount.
-- Detect ranges: “over 50 experts”, “10+ engineers”, “200+ employees”.
-- If the firm is clearly small (boutique agency), infer 5–30.
-- If the firm is clearly established (30+ years old), infer 30–200.
-- Always return an INTEGER if possible. Otherwise return the closest plausible estimate.
+===========================================================
+PRICING (enhanced rules)
+===========================================================
+If explicit prices exist (e.g., "€29/mo", "pricing plans", "tiers"):
+  → Extract exact pricing text.
 
-FUNDING detection rules:
-- Capture ANY number tied to financing including: “€5M”, “5 million”, “Series A / B / Seed”.
-- If the company is clearly private & consultancy-based:
-  infer “No external funding (privately held)” instead of empty.
-- Accept guesses based on domain (e.g. consulting firms rarely raise VC).
-- Never return an empty string unless absolutely no inference is possible.
+If pricing is NOT explicitly mentioned:
+  → Infer pricing TIER based on sector, wording, and target customers.
+  → Choose ONE of: "Low-end", "Mid-market", "Premium", "Enterprise", "Freemium", "Unknown".
+  → Never return an empty string. Return "Unknown" if no inference is possible.
 
-Return STRICT JSON ONLY with EXACTLY these fields:
+===========================================================
+REVIEWS (enhanced rules)
+===========================================================
+Search for mentions of:
+  - "reviews", "testimonials", "ratings", "customer stories"
+  - e.g. "4.8 based on 120 reviews"
+
+If NO review count is explicitly present:
+  → Infer one of:
+      "Geen reviews gevonden"
+      "Enkele reviews verwacht"
+      "Veel reviews verwacht"
+      "Unknown"
+
+Return a short human-friendly phrase, e.g.:
+  "212 verified reviews (4.6★)"
+  "Geen reviews gevonden"
+
+===========================================================
+FUNDING (enhanced rules)
+===========================================================
+If funding is explicitly stated (e.g., “€5M seed”, “Series A”):
+  → Extract exactly.
+
+If NOT stated:
+  → Infer funding profile based on company type:
+        • Consultancy, agency, law/accounting firms → "Privately held, no external funding"
+        • SaaS startups → "Likely early-stage (<€5M)"
+        • Large known brands → "Likely well-funded or corporate-backed"
+        • Non-profits or institutions → "Publicly funded or donor-based"
+  → Never return an empty string.
+
+===========================================================
+TEAM SIZE / HIRING
+===========================================================
+Use word patterns:
+- "team of 120", "over 50 experts", "200+ employees"
+- If ambiguous, infer:
+    Boutique agency → 5–30
+    Growing B2B SaaS → 10–80
+    Large brand → 100+
+
+Return an INTEGER where possible.
+
+===========================================================
+RETURN STRICT JSON ONLY WITH EXACTLY THESE FIELDS
+===========================================================
 
 {{
   "ai_summary": "",
@@ -127,33 +189,21 @@ CONTENT:
 
         raw = response.choices[0].message.content.strip()
 
-        # Try parse
+        # Probeer direct JSON te parsen
         try:
             return json.loads(raw)
-        except:
-            # strip ```json
+        except Exception:
+            # strip ```json ``` blokken
             cleaned = raw.replace("```json", "").replace("```", "").strip()
             try:
                 return json.loads(cleaned)
-            except:
-                return {"ai_summary": raw}
+            except Exception:
+                # Fallback: stop ruwe output in ai_summary
+                return _empty_ai_result(ai_summary=raw)
 
     except Exception as e:
-        return {
-            "ai_summary": f"AI error: {e}",
-            "value_proposition": "",
-            "product_description": "",
-            "target_segment": "",
-            "pricing": "",
-            "key_features": [],
-            "competitors": [],
-            "headquarters": "",
-            "office_locations": "",
-            "team_size": None,
-            "funding": "",
-            "funding_history": "",
-            "traction_signals": "",
-        }
+        # Bij eender welke API-fout: altijd een geldige dict
+        return _empty_ai_result(ai_summary=f"AI error: {e}")
 
 
 # ==========================================================
@@ -202,14 +252,14 @@ Rules:
 
         try:
             return json.loads(raw).get("competitors", [])
-        except:
+        except Exception:
             cleaned = raw.replace("```json", "").replace("```", "").strip()
             try:
                 return json.loads(cleaned).get("competitors", [])
-            except:
+            except Exception:
                 return []
 
-    except:
+    except Exception:
         return []
 
 
@@ -225,7 +275,11 @@ def scrape_website(url):
     text = base["text"] or ""
 
     description = generate_ai_description(text)
-    ai = ask_ai_for_company_info(url, title, text)
+
+    # Zorg dat we ALTIJD een dict hebben
+    ai = ask_ai_for_company_info(url, title, text) or {}
+    if not isinstance(ai, dict):
+        ai = _empty_ai_result(ai_summary=str(ai))
 
     # Competitor fallback
     competitors_extra = generate_competitors(
@@ -266,6 +320,7 @@ if __name__ == "__main__":
     print("Scraping test URL:", test_url)
     result = scrape_website(test_url)
     print(json.dumps(result, indent=2, ensure_ascii=False))
+
 
 
 
