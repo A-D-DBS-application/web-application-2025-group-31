@@ -53,11 +53,14 @@
             <a class="button" href="{{ url_for('main.export_company', company_id=company.company_id, format='txt') }}">
                 VC Memo
             </a>
+            <a class="button" href="{{ url_for('main.export_pdf', company_id=company.company_id) }}">
+                Export PDF
+            </a>
+
+            <a class="button" href="{{ url_for('main.export_slides', company_id=company.company_id) }}">
+                Export Slides
+            </a>
         </div>
-
-
-
-
 
         <!-- =============================================================== -->
         <!-- BLOCK 1: WEBSITE & IDENTITEIT -->

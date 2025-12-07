@@ -700,6 +700,108 @@ def companies():
 # =====================================================
 # EXPORT: One-click company profile (VC analyst)
 # =====================================================
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
+from pptx import Presentation
+from pptx.util import Inches, Pt
+
+@bp.route('/company/<int:company_id>/export-pdf')
+def export_pdf(company_id):
+    company = Company.query.get_or_404(company_id)
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Title
+    story.append(Paragraph(f"<b>{company.name}</b>", styles['Title']))
+    story.append(Spacer(1, 16))
+
+    fields = [
+        ("Website", company.website_url),
+        ("Value Proposition", company.value_proposition),
+        ("Product Description", company.product_description),
+        ("Target Segment", company.target_segment),
+        ("Pricing", company.pricing),
+        ("Funding", str(company.funding)),
+        ("Team Size", str(company.team_size)),
+        ("Traction signals", company.traction_signals),
+    ]
+
+    for title, value in fields:
+        story.append(Paragraph(f"<b>{title}</b><br/>{value or '—'}", styles['BodyText']))
+        story.append(Spacer(1, 12))
+
+    # Features
+    if company.key_features:
+        story.append(Paragraph("<b>Key Features</b>", styles['Heading2']))
+        for f in company.key_features:
+            story.append(Paragraph(f"- {f}", styles['BodyText']))
+        story.append(Spacer(1, 12))
+
+    # Competitors
+    if company.competitors:
+        story.append(Paragraph("<b>Competitors</b>", styles['Heading2']))
+        for comp in company.competitors:
+            story.append(Paragraph(f"- {comp}", styles['BodyText']))
+
+    doc.build(story)
+    buffer.seek(0)
+
+    return Response(
+        buffer,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={company.name}_Report.pdf"}
+    )
+
+@bp.route('/company/<int:company_id>/export-slides')
+def export_slides(company_id):
+    company = Company.query.get_or_404(company_id)
+
+    prs = Presentation()
+    title_slide_layout = prs.slide_layouts[0]
+    slide = prs.slides.add_slide(title_slide_layout)
+
+    # Title Page
+    slide.shapes.title.text = company.name
+    slide.placeholders[1].text = "Baseline Analysis"
+
+    # Content slides
+    def add_slide(title, content_list):
+        layout = prs.slide_layouts[1]
+        slide = prs.slides.add_slide(layout)
+        slide.shapes.title.text = title
+        body = slide.placeholders[1].text_frame
+        for c in content_list:
+            body.add_paragraph().text = c
+
+    add_slide("What they do", [
+        company.value_proposition or "—",
+        company.product_description or "—"
+    ])
+
+    add_slide("Target Segment", [company.target_segment or "—"])
+
+    add_slide("Pricing", [company.pricing or "—"])
+
+    if company.key_features:
+        add_slide("Key Features", company.key_features)
+
+    if company.competitors:
+        add_slide("Competitors", company.competitors)
+
+    # Save file to memory
+    buffer = io.BytesIO()
+    prs.save(buffer)
+    buffer.seek(0)
+
+    return Response(
+        buffer,
+        mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f"attachment; filename={company.name}_Slides.pptx"}
+    )
 
 @bp.route('/company/<int:company_id>/export')
 def export_company(company_id):
