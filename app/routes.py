@@ -122,19 +122,27 @@ def features_from_company(company):
 
 
 def extract_positive_reviews(company):
+    from app.google_reviews import get_google_reviews
+
     """
-    Heel eenvoudige schatting van positieve reviews.
-    Zoekt bv. '123 reviews' in traction_signals / ai_summary.
-    Retourneert (aantal, label-tekst).
+    Eerst proberen we officiële Google Reviews API.
+    Als er niks is → fallback op AI / tekstdetectie.
     """
+    # 1) Google API proberen
+    count, label = get_google_reviews(company.name)
+    if count > 0:
+        return count, label
+
+    # 2) fallback
     text = ((company.traction_signals or "") + " " + (company.ai_summary or "")).lower()
     matches = re.findall(r"(\d+)\s*\+?\s*(?:reviews|review)", text)
     if matches:
         try:
             n = int(matches[0])
             return n, f"{n} positieve reviews (geschat)"
-        except ValueError:
-            return 0, "Geen reviews gevonden"
+        except:
+            pass
+
     return 0, "Geen reviews gevonden"
 
 
