@@ -67,6 +67,9 @@ CONTENT:
 # ==========================================================
 # Helper voor default AI-resultaat
 # ==========================================================
+# ==========================================================
+# Helper voor default AI-resultaat
+# ==========================================================
 def _empty_ai_result(ai_summary: str = ""):
     return {
         "ai_summary": ai_summary,
@@ -82,23 +85,9 @@ def _empty_ai_result(ai_summary: str = ""):
         "funding": "",
         "funding_history": "",
         "traction_signals": "",
-        def _empty_ai_result(ai_summary: str = ""):
-    return {
-        "ai_summary": ai_summary,
-        "value_proposition": "",
-        "product_description": "",
-        "target_segment": "",
-        "pricing": "",
-        "key_features": [],
-        "competitors": [],
-        "headquarters": "",
-        "office_locations": "",
-        "team_size": None,
-        "funding": "",
-        "funding_history": "",
-        "traction_signals": "",
-        "historical_metrics": [],  
+        "historical_metrics": [],  # nieuw veld voor inferred history
     }
+
 
     
 
