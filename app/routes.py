@@ -374,6 +374,159 @@ def register():
 
     return render_template('register.html', message=message)
 
+# =====================================================
+# INTERNE FUNCTIE: REFRESH ALL COMPANIES (voor scheduler)
+# =====================================================
+
+# LET OP: Geen @bp.route decorateur! Deze functie wordt nu direct door APScheduler aangeroepen.
+def refresh_all_companies():
+    """
+    Wordt wekelijks uitgevoerd door APScheduler. 
+    Loopt door ALLE bedrijven om hun data, metrics en change events bij te werken.
+    """
+    from app import db, create_app # Importeer de app context
+    
+    # Zorg dat de databasebewerkingen binnen de applicatiecontext vallen
+    app = create_app()
+    with app.app_context():
+        
+        companies_to_refresh = Company.query.all()
+        
+        if not companies_to_refresh:
+            print("Scheduler: Geen bedrijven gevonden om te verversen.")
+            return
+
+        refreshed_count = 0
+        
+        for company in companies_to_refresh:
+            
+            if not company.website_url:
+                continue
+
+            try:
+                # --- SCRAPEN ---
+                result = scrape_website(company.website_url)
+                
+                if result.get("error"):
+                    continue
+
+                # Gebruik 'existing' voor duidelijkheid
+                existing = company 
+
+                # ============================================
+                # 1) STRATEGIC MOVE DETECTION (GEKOPIEERD UIT /SCRAPE)
+                # ============================================
+                change_events = []
+
+                # ===== FEATURES =====
+                old_features = normalize_list(existing.key_features)
+                new_features = normalize_list(result.get("key_features"))
+
+                added_features = [f for f in new_features if f not in old_features]
+                removed_features = [f for f in old_features if f not in new_features]
+
+                for f in added_features:
+                    change_events.append({
+                        "event_type": "new_feature",
+                        "description": f"Nieuwe feature toegevoegd: {f}"
+                    })
+
+                for f in removed_features:
+                    change_events.append({
+                        "event_type": "removed_feature",
+                        "description": f"Feature verwijderd: {f}"
+                    })
+
+                # ===== PRICING =====
+                old_price = existing.pricing or ""
+                new_price = result.get("pricing") or ""
+
+                if not texts_similar(old_price, new_price):
+                    if old_price and new_price:
+                        change_events.append({
+                            "event_type": "pricing_change",
+                            "description": f"Pricing gewijzigd van '{old_price}' → '{new_price}'"
+                        })
+                    elif new_price:
+                        change_events.append({
+                            "event_type": "pricing_added",
+                            "description": f"Pricing toegevoegd: {new_price}"
+                        })
+                    elif old_price:
+                        change_events.append({
+                            "event_type": "pricing_removed",
+                            "description": "Pricing verwijderd"
+                        })
+
+                # ===== PRODUCT DESCRIPTION =====
+                old_product = existing.product_description or ""
+                new_product = result.get("product_description") or ""
+
+                if not texts_similar(old_product, new_product):
+                    change_events.append({
+                        "event_type": "product_change",
+                        "description": "Productbeschrijving gewijzigd (mogelijke nieuwe productlijn)"
+                    })
+
+                # ===== TARGET SEGMENT =====
+                old_segment = existing.target_segment or ""
+                new_segment = result.get("target_segment") or ""
+
+                if not texts_similar(old_segment, new_segment):
+                    change_events.append({
+                        "event_type": "segment_change",
+                        "description": "Target segment gewijzigd"
+                    })
+                    
+                # Sla alle echte wijzigingen op in de database
+                for ev in change_events:
+                    db.session.add(ChangeEvent(
+                        company_id=existing.company_id,
+                        event_type=ev["event_type"],
+                        description=ev["description"]
+                    ))
+
+                # ----------------------------------------
+                # 2) UPDATE BEDRIJFSGEGEVENS
+                # ----------------------------------------
+                existing.name = result.get("title") or existing.name
+                existing.headquarters = result.get("headquarters")
+                existing.office_locations = result.get("office_locations")
+                existing.team_size = safe_int(result.get("team_size"))
+                existing.funding = safe_float(result.get("funding"))
+                existing.funding_history = result.get("funding_history")
+                existing.traction_signals = result.get("traction_signals")
+                existing.ai_summary = result.get("ai_summary")
+                existing.value_proposition = result.get("value_proposition")
+                existing.product_description = result.get("product_description")
+                existing.target_segment = result.get("target_segment")
+                existing.pricing = result.get("pricing")
+                existing.key_features = result.get("key_features")
+                existing.competitors = result.get("competitors")
+                
+                # 3) METRICS UPDATEN & GESCHIEDENIS TRACKEN
+                update_company_metrics(existing)
+                backfill_historical_metrics(existing.company_id, result.get("historical_metrics", []))
+
+                # 4) AUDIT LOG
+                db.session.add(AuditLog(
+                    company_id=existing.company_id,
+                    source_name="Scheduled Refresh (APScheduler)",
+                    source_url=existing.website_url
+                ))
+                
+                refreshed_count += 1
+                
+            except Exception as e:
+                db.session.rollback() 
+                print(f"Scheduler Fout: Fout bij verversen van {company.name}: {e}")
+                continue
+
+        # Commit alle updates in één keer 
+        db.session.commit()
+        print(f"Scheduler: Succesvol {refreshed_count} bedrijven ververst.")
+
+    return # Geen return code of jsonify nodig
 
 # =====================================================
 # LOGIN
@@ -1309,8 +1462,6 @@ def api_events():
         })
 
     return jsonify(out)
-
-
 # =====================================================
 # DELETE COMPANY (NIEUW)
 # =====================================================
