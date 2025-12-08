@@ -160,3 +160,33 @@ class ChangeEvent(db.Model):
     def __repr__(self):
         return f"<ChangeEvent {self.event_type}>"
 
+class MetricHistory(db.Model):
+    __tablename__ = 'metric_history'
+
+    id = db.Column(db.BigInteger, primary_key=True)
+
+    company_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('company.company_id', ondelete="CASCADE"),
+        nullable=False
+    )
+
+    name = db.Column(db.Text, nullable=False)
+    value = db.Column(db.Numeric)
+
+    recorded_at = db.Column(
+        db.DateTime(timezone=True),
+        server_default=db.func.now(),
+        index=True
+    )
+
+    # "snapshot" (live scrape) of "inferred" (AI backfill)
+    source = db.Column(db.Text, default="snapshot")
+
+    company = db.relationship(
+        'Company',
+        backref=db.backref('metric_history', cascade="all, delete", lazy=True)
+    )
+
+    def __repr__(self):
+        return f"<MetricHistory {self.name} ({self.company_id}) [{self.source}]>"

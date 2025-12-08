@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from app.models import AppUser, Company, Metric, AuditLog, ChangeEvent
+from app.models import AppUser, Company, Metric, AuditLog, ChangeEvent, MetricHistory
+from decimal import Decimal
 import csv
 import io
 from app.scraper import scrape_website
@@ -219,6 +220,71 @@ def get_or_create_metric(company_id: int, name: str):
         db.session.add(metric)
     return metric
 
+def backfill_historical_metrics(company_id: int, historical_list: list):
+    """
+    Schrijft door AI gereconstrueerde historiek weg als 'inferred'.
+    Verwacht items met:
+      name: "TeamSize" | "Funding" | "Pricing" | "Reviews"
+      date: "YYYY-MM-DD"
+      value: numeriek
+      source: "explicit" | "inferred" (we slaan het als 'inferred' op)
+    """
+    for item in historical_list or []:
+        name = item.get("name")
+        date_str = item.get("date")
+        value = item.get("value")
+
+        if not (name and date_str):
+            continue
+
+        try:
+            recorded_at = datetime.fromisoformat(date_str)
+        except ValueError:
+            continue
+
+        num_value = None
+        if value is not None:
+            try:
+                num_value = Decimal(str(value))
+            except Exception:
+                pass
+
+        hist = MetricHistory(
+            company_id=company_id,
+            name=name,
+            value=num_value,
+            recorded_at=recorded_at,
+            source="inferred"
+        )
+        db.session.add(hist)
+
+
+def track_metric_history(company_id: int, name: str, value, source: str = "snapshot"):
+    """
+    Slaat een datapunt op voor historiek / grafieken.
+    source:
+      - "snapshot": live scrape nu
+      - "inferred": AI-reconstructie van verleden
+    """
+    num_value = None
+    if value is not None:
+        try:
+            if isinstance(value, Decimal):
+                num_value = value
+            else:
+                num_value = Decimal(str(value))
+        except Exception:
+            num_value = None
+
+    hist = MetricHistory(
+        company_id=company_id,
+        name=name,
+        value=num_value,
+        source=source
+    )
+    db.session.add(hist)
+
+
 
 def update_company_metrics(company):
     """
@@ -232,6 +298,7 @@ def update_company_metrics(company):
     m_pricing.value = price_code
     m_pricing.description = price_label
     m_pricing.last_updated = datetime.utcnow()
+    track_metric_history(company.company_id, "Pricing", price_code)
 
     # 2) Features
     feat_count, feat_label = features_from_company(company)
@@ -239,6 +306,7 @@ def update_company_metrics(company):
     m_feat.value = feat_count
     m_feat.description = feat_label
     m_feat.last_updated = datetime.utcnow()
+    track_metric_history(company.company_id, "Features", feat_count)
 
     # 3) Reviews
     rev_count, rev_label = extract_positive_reviews(company)
@@ -246,6 +314,7 @@ def update_company_metrics(company):
     m_rev.value = rev_count
     m_rev.description = rev_label
     m_rev.last_updated = datetime.utcnow()
+    track_metric_history(company.company_id, "Reviews", rev_count)
 
     # 4) Funding
     fund_val, fund_label = format_funding_for_metric(company)
@@ -253,6 +322,7 @@ def update_company_metrics(company):
     m_fund.value = fund_val
     m_fund.description = fund_label
     m_fund.last_updated = datetime.utcnow()
+    track_metric_history(company.company_id, "Funding", fund_val)
 
     # 5) Hiring
     hiring_code, hiring_label = estimate_hiring_activity(company)
@@ -260,6 +330,7 @@ def update_company_metrics(company):
     m_hiring.value = hiring_code
     m_hiring.description = hiring_label
     m_hiring.last_updated = datetime.utcnow()
+    track_metric_history(company.company_id, "Hiring", hiring_code)
 
 
 # =====================================================
@@ -449,39 +520,35 @@ def company_detail(company_id):
     company = Company.query.get_or_404(company_id)
 
     # Alle wijzigingen voor dit bedrijf (nieuw → oud)
-    events = ChangeEvent.query.filter_by(company_id=company_id) \
-        .order_by(ChangeEvent.detected_at.desc()) \
-        .all()
-
-    return render_template('company_detail.html', company=company, events=events)
-
-
-@bp.route('/company/<int:company_id>/alerts')
-def company_alerts(company_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
-    company = Company.query.get_or_404(company_id)
-
     events = (ChangeEvent.query
               .filter_by(company_id=company_id)
               .order_by(ChangeEvent.detected_at.desc())
               .all())
 
-    alerts = []
-    for e in events:
-        alerts.append({
-            "company_id": e.company_id,
-            "company": company.name,
-            "type": e.event_type,
-            "description": e.description,
-            "time": e.detected_at
-        })
+    # --------- HISTORIEK VOOR GRAFIEKEN ---------
+    def history_series(metric_name: str):
+        rows = (MetricHistory.query
+                .filter_by(company_id=company_id, name=metric_name)
+                .order_by(MetricHistory.recorded_at.asc())
+                .all())
+        labels = [r.recorded_at.strftime("%Y-%m-%d %H:%M") for r in rows]
+        values = [float(r.value) if r.value is not None else None for r in rows]
+        return labels, values
+
+    pricing_labels, pricing_values = history_series("Pricing")
+    hiring_labels, hiring_values = history_series("Hiring")
+    review_labels, review_values = history_series("Reviews")
 
     return render_template(
-        'all_alerts.html',
-        alerts=alerts,
-        company=company
+        'company_detail.html',
+        company=company,
+        events=events,
+        pricing_labels=pricing_labels,
+        pricing_values=pricing_values,
+        hiring_labels=hiring_labels,
+        hiring_values=hiring_values,
+        review_labels=review_labels,
+        review_values=review_values,
     )
 
 
@@ -1009,6 +1076,10 @@ def scrape():
         # ----------------------------------------
         update_company_metrics(existing)
 
+        historical = result.get("historical_metrics", [])
+        backfill_historical_metrics(existing.company_id, historical)
+
+
         db.session.commit()
 
         return redirect(url_for('main.company_detail', company_id=existing.company_id))
@@ -1047,6 +1118,9 @@ def scrape():
 
     # METRICS AANMAKEN VOOR DIT NIEUWE BEDRIJF
     update_company_metrics(new_company)
+
+    historical = result.get("historical_metrics", [])
+    backfill_historical_metrics(new_company.company_id, historical)
 
     db.session.commit()
 
