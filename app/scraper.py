@@ -85,7 +85,7 @@ def _empty_ai_result(ai_summary: str = ""):
         "funding": "",
         "funding_history": "",
         "traction_signals": "",
-        "historical_metrics": [],  # nieuw veld voor inferred history
+        "historical_metrics": [],  
     }
 
 
@@ -96,7 +96,7 @@ def _empty_ai_result(ai_summary: str = ""):
 # 3. AI BUSINESS FUNDAMENTALS EXTRACTION
 # ==========================================================
 def ask_ai_for_company_info(url, title, text):
-        prompt = f"""
+    prompt = f"""
 You are an expert in extracting business fundamentals from messy website text.
 
 Be extremely proactive and AGGRESSIVE about detecting HEADQUARTERS and OFFICE LOCATIONS and TEAM SIZE and FUNDING and FUNDING_HISTORY.
@@ -239,11 +239,7 @@ CONTENT:
         except Exception:
             # strip ```json ``` blokken
             cleaned = raw.replace("```json", "").replace("```", "").strip()
-            try:
-                return json.loads(cleaned)
-            except Exception:
-                # Fallback: stop ruwe output in ai_summary
-                return _empty_ai_result(ai_summary=raw)
+            return json.loads(cleaned)
 
     except Exception as e:
         # Bij eender welke API-fout: altijd een geldige dict
