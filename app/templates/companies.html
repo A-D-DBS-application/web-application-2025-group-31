@@ -135,7 +135,13 @@
                                                 style="padding:4px 8px; font-size:12px; background:#444; margin-left:4px;">
                                                 Baseline
                                             </a>
-
+                                             <!--  DELETE BUTTON -->
+                                            <form action="{{ url_for('main.delete_company', company_id=c.company_id) }}"
+                                                method="POST" style="display:inline;">
+                                                <button class="button"
+                                                        style="padding:4px 8px; font-size:12px; margin-left:4px; background:#b50000;">
+                                                    Delete
+                                                </button></form>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -155,3 +161,4 @@
 </div>
 </body>
 </html>
+
