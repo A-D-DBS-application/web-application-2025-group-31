@@ -1311,3 +1311,27 @@ def api_events():
     return jsonify(out)
 
 
+# =====================================================
+# DELETE COMPANY (NIEUW)
+# =====================================================
+
+@bp.route("/company/<int:company_id>/delete", methods=["POST"])
+def delete_company(company_id):
+    # Controleer of de gebruiker is ingelogd
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    company = Company.query.get(company_id)
+    if not company:
+        return "Bedrijf niet gevonden", 404
+
+    # Verwijder het bedrijf en commit de transactie
+    db.session.delete(company)
+    db.session.commit()
+
+    # Optioneel: In een productie-omgeving zou u ook Audit Logs,
+    # Metrics, Change Events, en Metric History gerelateerd aan
+    # dit bedrijf moeten verwijderen om weesgegevens te voorkomen.
+
+    # Terugsturen naar het bedrijvenoverzicht
+    return redirect(url_for("main.companies"))
