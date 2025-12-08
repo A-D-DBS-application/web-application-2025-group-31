@@ -12,32 +12,28 @@
 <div class="layout">
 
     <div class="sidebar">
-
         <h2>RIVAL</h2>
         <div class="sidebar-tagline">Competitive Intelligence</div>
-
         <nav>
             <a href="{{ url_for('main.dashboard') }}">
-                <span class="label"><span class="dot"></span>Dashboard</span>
+                <span class="label"><span class="dot"></span><span>Dashboard</span></span>
             </a>
-
             <a href="{{ url_for('main.watchlist') }}">
-                <span class="label"><span class="dot"></span>Watchlist</span>
+                <span class="label"><span class="dot"></span><span>Watchlist</span></span>
             </a>
-
             <a href="{{ url_for('main.companies') }}">
-                <span class="label"><span class="dot"></span>Bedrijven</span>
+                <span class="label"><span class="dot"></span><span>Bedrijven</span></span>
             </a>
-
             <a href="{{ url_for('main.weekly_mail_settings') }}" class="active">
-                <span class="label"><span class="dot"></span>Newsletter</span>
+                <span class="label"><span class="dot"></span><span>Newsletter</span></span>
+            </a>
+            <a href="{{ url_for('main.logout') }}">
+                <span class="label"><span class="dot"></span><span>Uitloggen</span></span>
             </a>
         </nav>
-
         <div class="sidebar-footer">
             Rival MVP © 2025
         </div>
-
     </div>
 
     <div class="content fade-in">
@@ -45,7 +41,7 @@
         <div class="topbar">
             <div class="topbar-left">
                 <h1>Digest Instellingen</h1>
-                <div class="subtitle">Beheer je wekelijkse e-mailnotificaties</div>
+                <div class="subtitle">Beheer uw wekelijkse e-mailnotificaties en inhoud</div>
             </div>
             <div class="topbar-right">
                 <span class="badge-soft">Ingelogd als {{ session['username'] }}</span>
@@ -54,25 +50,80 @@
 
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Wekelijkse Digest</h2>
-                <span class="card-meta">E-mail notificaties</span>
+                <h2 class="card-title">Instellingen Wekelijkse Digest</h2>
+                <span class="card-meta">E-mailfrequentie en Signaaltypes</span>
             </div>
 
             <div class="card-body">
                 <form action="{{ url_for('main.update_weekly_mail') }}" method="POST">
 
-                    <label style="display:flex;align-items:center;gap:10px;">
-                        <input 
-                            type="checkbox" 
-                            name="digest"
-                            {% if user.weekly_digest %}checked{% endif %}
-                            style="width:18px;height:18px;"
-                        >
-                        Ontvang elke week een e-mail met competitor updates
-                    </label>
+                    <div class="form-group">
+                        <label for="frequency" class="form-label">
+                            Frequentie
+                        </label>
+                        <select id="frequency" name="frequency" class="form-control">
+                            
+                            <option value="" {% if not user.digest_frequency or user.digest_frequency == '' %}selected{% endif %}>
+                                Digest uitschakelen (Geen mails)
+                            </option>
+                            <option value="weekly" {% if user.digest_frequency == 'weekly' %}selected{% endif %}>
+                                Wekelijks
+                            </option>
+                            <option value="biweekly" {% if user.digest_frequency == 'biweekly' %}selected{% endif %}>
+                                Twee-wekelijks
+                            </option>
+                            <option value="monthly" {% if user.digest_frequency == 'monthly' %}selected{% endif %}>
+                                Maandelijks
+                            </option>
+                        </select>
+                        <small class="form-help">Kies hoe vaak u de samenvatting wilt ontvangen.</small>
+                    </div>
 
-                    <button type="submit" class="button" style="margin-top:15px;">
-                        Instellingen opslaan
+                    <hr class="form-separator">
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Gedetecteerde Signalen Opnemen
+                        </label>
+
+                        {% set available_signals = [
+                            ('pricing_change', 'Prijs- en abonnementswijzigingen'),
+                            ('new_feature', 'Nieuwe key features/producten'),
+                            ('segment_change', 'Wijzigingen in het target segment/doelgroep'),
+                            ('hiring', 'Aanzienlijke aanwervingen of groei van het team'),
+                            ('funding', 'Nieuwe financieringsrondes of investeringen')
+                        ] %}
+                        
+                        <div class="checkbox-group"> 
+                            {% for value, label in available_signals %}
+                                <label class="checkbox-container">
+                                    <input 
+                                        type="checkbox" 
+                                        name="digest_signals"
+                                        value="{{ value }}"
+                                        {% if value in (user.digest_signals or []) %}checked{% endif %}
+                                    >
+                                    <span class="checkbox-label">{{ label }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+
+                        <small class="form-help">Selecteer welke strategische veranderingen u wilt zien in de digest.</small>
+                    </div>
+                    
+                    <hr class="form-separator">
+
+                    <div class="info-block">
+                        <p>
+                            <strong>Bedrijven Selecteren:</strong> De bedrijven die in de digest worden opgenomen, worden beheerd op uw 
+                            <a href="{{ url_for('main.watchlist') }}" class="text-link">**Watchlist pagina**</a>. 
+                            Schakel daar de 'Digest'-optie per bedrijf in of uit.
+                        </p>
+                    </div>
+
+
+                    <button type="submit" class="button" style="margin-top:20px;">
+                        Instellingen Opslaan
                     </button>
 
                 </form>
@@ -80,20 +131,17 @@
         </div>
 
 
-        <!-- ========================================= -->
-        <!--    VOORBEELD NIEUWSBRIEF (PREVIEW KAART)   -->
-        <!-- ========================================= -->
         <div class="card card-muted" style="margin-top: 24px;">
             <div class="card-header">
                 <h2 class="card-title">Voorbeeld van wekelijkse mail</h2>
-                <div class="card-meta">Dit is een preview van wat Rival jou elke week zou sturen.</div>
+                <div class="card-meta">Dit is een preview van wat Rival u zou sturen, gebaseerd op uw voorkeuren.</div>
             </div>
 
-            <div class="card-body" style="line-height: 1.7;">
+            <div class="card-body">
 
-                <p><strong>📊 Weekly Competitive Digest</strong></p>
-                <p style="color: var(--text-soft); font-size: 0.92rem;">
-                    Hier is een voorbeeld van hoe jouw wekelijkse update eruit zou zien.
+                <p><strong>Weekly Competitive Digest</strong></p>
+                <p class="subtitle" style="margin-bottom: 12px;">
+                    Hier is een voorbeeld van hoe uw wekelijkse update eruit zou zien.
                 </p>
 
                 <ul class="soft-list">
@@ -118,9 +166,9 @@
                     </li>
                 </ul>
 
-                <p style="margin-top: 12px; color: var(--text-soft); font-size: 0.9rem;">
-                    Opmerking: dit is een demo-voorbeeld.  
-                    De echte mails tonen enkel bedrijven uit jouw watchlist.
+                <p class="card-meta" style="margin-top: 12px;">
+                    Opmerking: dit is een demo-voorbeeld.
+                    De echte mails tonen enkel bedrijven uit uw watchlist met `digest_enabled = True` en de geselecteerde signaaltypes.
                 </p>
 
             </div>

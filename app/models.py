@@ -66,7 +66,7 @@ class AppUser(db.Model):
 
 
 # ======================================
-# TABLE: UserWatchlist
+# TABLE: UserWatchlist (GECORRIGEERD)
 # ======================================
 class UserWatchlist(db.Model):
     __tablename__ = 'user_watchlist'
@@ -75,6 +75,7 @@ class UserWatchlist(db.Model):
     user_id = db.Column(db.BigInteger, db.ForeignKey('app_user.user_id', ondelete="CASCADE"))
     company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
     added_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    digest_enabled = db.Column(db.Boolean, default=False) 
 
     user = db.relationship('AppUser', back_populates='watchlist')
     company = db.relationship('Company', back_populates='watchers')

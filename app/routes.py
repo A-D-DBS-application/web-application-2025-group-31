@@ -1486,3 +1486,36 @@ def delete_company(company_id):
 
     # Terugsturen naar het bedrijvenoverzicht
     return redirect(url_for("main.companies"))
+
+# =====================================================
+# COMPANY ALERTS (NIEUW)
+# =====================================================
+
+@bp.route('/company/<int:company_id>/alerts')
+def company_alerts(company_id):
+    if 'user_id' not in session:
+        return redirect(url_for('main.login'))
+
+    company = Company.query.get_or_404(company_id)
+    
+    # Haal alle events op voor dit specifieke bedrijf
+    events = ChangeEvent.query.filter_by(company_id=company_id).order_by(
+        ChangeEvent.detected_at.desc()
+    ).all()
+
+    alerts = []
+    for e in events:
+        alerts.append({
+            "company_id": e.company_id,
+            "company": company.name,
+            "type": e.event_type,
+            "description": e.description,
+            "time": e.detected_at
+        })
+    
+    # Gebruik dezelfde template als /all-alerts, maar geef het bedrijf mee
+    return render_template(
+        "all_alerts.html",
+        alerts=alerts,
+        company=company # Nu weet de template welk bedrijf het betreft
+    )
