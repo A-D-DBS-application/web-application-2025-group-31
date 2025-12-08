@@ -82,14 +82,32 @@ def _empty_ai_result(ai_summary: str = ""):
         "funding": "",
         "funding_history": "",
         "traction_signals": "",
+        def _empty_ai_result(ai_summary: str = ""):
+    return {
+        "ai_summary": ai_summary,
+        "value_proposition": "",
+        "product_description": "",
+        "target_segment": "",
+        "pricing": "",
+        "key_features": [],
+        "competitors": [],
+        "headquarters": "",
+        "office_locations": "",
+        "team_size": None,
+        "funding": "",
+        "funding_history": "",
+        "traction_signals": "",
+        "historical_metrics": [],  
     }
+
+    
 
 
 # ==========================================================
 # 3. AI BUSINESS FUNDAMENTALS EXTRACTION
 # ==========================================================
 def ask_ai_for_company_info(url, title, text):
-    prompt = f"""
+        prompt = f"""
 You are an expert in extracting business fundamentals from messy website text.
 
 Be extremely proactive and AGGRESSIVE about detecting HEADQUARTERS and OFFICE LOCATIONS and TEAM SIZE and FUNDING and FUNDING_HISTORY.
@@ -158,6 +176,25 @@ If NOT stated:
   → Never return an empty string if you can reasonably infer something.
 
 ===========================================================
+HISTORICAL METRICS (inferred timeline)
+===========================================================
+Based on dates and phrasing in the content,
+try to reconstruct an approximate evolution of key metrics.
+
+You may include data points for:
+- "TeamSize"        (number of employees / team)
+- "Funding"         (cumulative funding in EUR)
+- "Pricing"         (relative tier: 1=low, 2=mid, 3=premium, 4=enterprise)
+- "Reviews"         (approximate number of reviews)
+
+Rules:
+- Use ISO dates: "YYYY-MM-DD". If only a year is known, use "YYYY-01-01".
+- If values are clearly stated (e.g. "in 2021 we raised €5M"):
+    use them as "source": "explicit".
+- If you infer or estimate from context, use "source": "inferred".
+- Only add a few HIGH-SIGNAL data points (max 10 total).
+
+===========================================================
 WHAT YOU MUST RETURN
 ===========================================================
 Return STRICT JSON ONLY with EXACTLY these fields:
@@ -175,7 +212,15 @@ Return STRICT JSON ONLY with EXACTLY these fields:
   "team_size": null,
   "funding": "",
   "funding_history": "",
-  "traction_signals": ""
+  "traction_signals": "",
+  "historical_metrics": [
+    {{
+      "name": "TeamSize" | "Funding" | "Pricing" | "Reviews",
+      "date": "YYYY-MM-DD",
+      "value": 0,
+      "source": "explicit" | "inferred"
+    }}
+  ]
 }}
 
 CONTENT SOURCE:
@@ -185,6 +230,7 @@ TITLE: {title}
 CONTENT:
 {text}
 """
+
 
     try:
         response = client.chat.completions.create(
@@ -318,6 +364,8 @@ def scrape_website(url):
         "funding": ai.get("funding"),
         "funding_history": ai.get("funding_history"),
         "traction_signals": ai.get("traction_signals"),
+
+        "historical_metrics": ai.get("historical_metrics", []),
     }
 
 

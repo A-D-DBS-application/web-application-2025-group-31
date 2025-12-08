@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>{{ company.name }} | Baseline Report</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body>
@@ -258,6 +260,49 @@
             </div>
         </section>
 
+        <!-- =============================================================== -->
+        <!-- BLOCK 11: HISTORISCHE TRENDS -->
+        <!-- =============================================================== -->
+        <section class="card soft-shadow fade-in" style="margin-top: 20px;">
+            <div class="card-header">
+                <h2 class="card-title">Historische trends</h2>
+                <div class="card-meta">
+                    AI-reconstructie aangevuld met live scrapes
+                </div>
+            </div>
+
+            <div class="card-body">
+
+                {% if pricing_labels or hiring_labels or review_labels %}
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                        <div>
+                            <h3 class="card-subtitle">Pricing evolution</h3>
+                            <canvas id="priceChart"></canvas>
+                        </div>
+
+                        <div>
+                            <h3 class="card-subtitle">Hiring activity</h3>
+                            <canvas id="hiringChart"></canvas>
+                        </div>
+
+                        <div style="grid-column:1 / -1;">
+                            <h3 class="card-subtitle">Review volume</h3>
+                            <canvas id="reviewChart"></canvas>
+                        </div>
+                    </div>
+
+                {% else %}
+                    <p class="subtitle">
+                        Nog geen historiek beschikbaar. Scrape deze website meerdere keren om trends op te bouwen.
+                    </p>
+                {% endif %}
+
+            </div>
+        </section>
+
+
+
         <!-- ========================================= -->
         <!-- STRATEGISCHE WIJZIGINGEN (TOP 3 + MEER) -->
         <!-- ========================================= -->
@@ -297,6 +342,47 @@
     </main>
 
 </div>
+
+<script>
+    const pricingLabels = {{ pricing_labels|tojson }};
+    const pricingValues = {{ pricing_values|tojson }};
+
+    const hiringLabels = {{ hiring_labels|tojson }};
+    const hiringValues = {{ hiring_values|tojson }};
+
+    const reviewLabels = {{ review_labels|tojson }};
+    const reviewValues = {{ review_values|tojson }};
+
+    function buildLineChart(canvasId, labels, data, label) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || labels.length === 0) return;
+
+        new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    tension: 0.25,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }
+
+    buildLineChart('priceChart', pricingLabels, pricingValues, 'Pricing score');
+    buildLineChart('hiringChart', hiringLabels, hiringValues, 'Hiring activity');
+    buildLineChart('reviewChart', reviewLabels, reviewValues, 'Aantal reviews');
+</script>
+
+
 </body>
 </html>
 
