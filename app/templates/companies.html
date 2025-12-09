@@ -41,8 +41,23 @@
         {% if message %}
             <p class="alert success">{{ message }}</p>
         {% endif %}
+        
+        <div style="margin-bottom: 20px;">
+            <form method="GET" action="{{ url_for('main.companies') }}" style="display:inline-block;">
+                <label for="sector_filter">Filter op Sector:</label>
+                <select name="sector_id" id="sector_filter" onchange="this.form.submit()" class="input-field">
+                    <option value="">-- Alle Sectoren --</option> 
+                    
+                    {% for sector in sectors %}
+                        <option value="{{ sector.sector_id }}" 
+                                {% if selected_sector_id == sector.sector_id %}selected{% endif %}>
+                            {{ sector.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
 
-        <!-- Add Company -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Nieuw bedrijf toevoegen</h2>
@@ -58,7 +73,7 @@
 
                     <label>Website</label>
                     <input type="text" name="website_url" placeholder="https://bedrijf.nl">
-
+                    
                     <label>Hoofdkantoor</label>
                     <input type="text" name="headquarters" placeholder="Stad, Land">
 
@@ -74,7 +89,6 @@
             </div>
         </section>
 
-        <!-- Company Table -->
         <section class="card card-muted soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Bestaande bedrijven</h2>
@@ -87,6 +101,7 @@
                             <thead>
                                 <tr>
                                     <th>Naam</th>
+                                    <th>Sector</th> 
                                     <th>Website</th>
                                     <th>Hoofdkantoor</th>
                                     <th>Team</th>
@@ -99,7 +114,15 @@
                                 {% for c in companies %}
                                     <tr>
                                         <td>{{ c.name }}</td>
-
+                                        
+                                        <td>
+                                            {% if c.sector %}
+                                                {{ c.sector.name }}
+                                            {% else %}
+                                                <span class="tag tag-unknown">–</span>
+                                            {% endif %}
+                                        </td>
+                                        
                                         <td>
                                             {% if c.website_url %}
                                                 <a href="{{ c.website_url }}" target="_blank">{{ c.website_url }}</a>
@@ -121,21 +144,19 @@
 
                                         <td style="white-space:nowrap;">
 
-                                            <!-- Watchlist -->
                                             <form method="POST" style="display:inline;">
                                                 <input type="hidden" name="form_type" value="add_to_watchlist">
                                                 <input type="hidden" name="company_id" value="{{ c.company_id }}">
                                                 <button class="button" style="padding:4px 8px; font-size:12px;">Watchlist</button>
                                             </form>
 
-                                            <!-- ⭐ BASELINE BUTTON -->
                                             <a
                                                 href="{{ url_for('main.company_detail', company_id=c.company_id) }}"
                                                 class="button"
                                                 style="padding:4px 8px; font-size:12px; background:#444; margin-left:4px;">
                                                 Baseline
                                             </a>
-                                             <!--  DELETE BUTTON -->
+                                            
                                             <form action="{{ url_for('main.delete_company', company_id=c.company_id) }}"
                                                 method="POST" style="display:inline;">
                                                 <button class="button"
