@@ -609,15 +609,35 @@ def dashboard():
 
     all_companies = Company.query.all()
 
-    # ----------------------------------------
+   # ----------------------------------------
     # ALLE DETECTEERDE COMPETITORS UIT DATABASE
     # ----------------------------------------
     all_detected_competitors = set()
+    
     for comp in all_companies:
+        # Check if comp.competitors is not None (database jsonb can be null)
         if comp.competitors:
             for c in comp.competitors:
-                if c and str(c).strip() != "":
-                    all_detected_competitors.add(c)
+                
+                competitor_name = ""
+
+                # CASE 1: The competitor is stored as a Dictionary (JSON Object)
+                if isinstance(c, dict):
+                    # Try to get 'name'. If 'name' doesn't exist, try 'company_name', else empty string.
+                    competitor_name = c.get('name') or c.get('company_name') or ""
+                    
+                    # DEBUG: If name is still empty, print the dict to see what keys to use
+                    if not competitor_name:
+                        print(f"DEBUG: Found a competitor dict without a 'name': {c}")
+
+                # CASE 2: The competitor is just a simple String
+                elif isinstance(c, str):
+                    competitor_name = c
+
+                # Add to set only if we found a valid name
+                if competitor_name and competitor_name.strip() != "":
+                    all_detected_competitors.add(competitor_name)
+
     all_detected_competitors = sorted(all_detected_competitors)
 
     # ----------------------------------------
