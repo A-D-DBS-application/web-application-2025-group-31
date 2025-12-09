@@ -391,18 +391,24 @@ header h1 {
     gap: 12px;
 }
 
-.auth-form label {
+.auth-form label,
+.form-label { /* Toegevoegd: Algemene labelstijl */
     font-weight: 500;
     color: var(--text-soft);
     font-size: 0.86rem;
+    display: block; /* Zorgt ervoor dat labels boven de inputs staan */
 }
 
+/* CORRECTION 1: UNIFORM FORM CONTROLS (Input and SELECT) */
+/* Dit zorgt ervoor dat de SELECT-tag de donkere stijl overneemt en de witte achtergrond verliest */
 .auth-form input,
 input[type="text"],
 input[type="number"],
 input[type="password"],
 input[type="email"],
-input[type="url"] {
+input[type="url"],
+select, /* CRUCIAAL: Voegt de select-tag toe */
+.form-control { /* Algemene klasse voor formuliervelden */
     padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.35);
@@ -410,6 +416,11 @@ input[type="url"] {
     transition: all 0.18s ease;
     font-size: 0.93rem;
     color: var(--text-main);
+    /* Verwijdert standaard browserstyling (cruciaal voor select-tag) */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer; /* Zodat de select-tag klikbaar aanvoelt */
 }
 
 .auth-form input::placeholder {
@@ -420,13 +431,76 @@ input[type="url"] {
 input[type="text"]:focus,
 input[type="password"]:focus,
 input[type="email"]:focus,
-input[type="url"]:focus {
+input[type="url"]:focus,
+select:focus { /* Voegt de focus-status toe voor select */
     outline: none;
     border-color: var(--accent);
     box-shadow:
         0 0 0 1px rgba(249, 115, 22, 0.55),
         0 0 20px rgba(249, 115, 22, 0.18);
 }
+
+/* Nieuwe algemene formulierklassen voor lay-out */
+.form-group {
+    margin-bottom: 25px; 
+}
+
+.form-help {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.86rem;
+    color: var(--text-soft);
+}
+
+.form-separator {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: 30px 0;
+}
+
+/* CORRECTION 2: VERTICAL CHECKBOX LAYOUT */
+/* Zorgt ervoor dat de signalen onder elkaar staan (flex-direction: column) */
+.checkbox-group {
+    display: flex;
+    flex-direction: column; 
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.93rem;
+    color: var(--text-strong);
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 12px;
+    width: 18px; 
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* Style voor de Watchlist verwijzing (.info-block) */
+.info-block {
+    padding: 15px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.info-block p {
+    margin: 0;
+}
+
+.text-link {
+    color: var(--accent);
+    font-weight: 600;
+}
+
 
 /* Checkbox line used in config forms */
 .checkbox-line {
