@@ -27,6 +27,8 @@ class Company(db.Model):
     key_features = db.Column(db.JSON)               # JSONB in database
     competitors = db.Column(db.JSON)                # JSONB in database
 
+    # NIEUW: Link naar de sectors tabel
+    sector_id = db.Column(db.Integer, db.ForeignKey('sectors.sector_id'), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
     # Relaties
@@ -161,6 +163,10 @@ class ChangeEvent(db.Model):
     def __repr__(self):
         return f"<ChangeEvent {self.event_type}>"
 
+# ======================================
+# TABLE: MetricHistory
+# ======================================
+
 class MetricHistory(db.Model):
     __tablename__ = 'metric_history'
 
@@ -191,3 +197,15 @@ class MetricHistory(db.Model):
 
     def __repr__(self):
         return f"<MetricHistory {self.name} ({self.company_id}) [{self.source}]>"
+
+
+
+# ======================================
+# TABLE: Sector 
+# ======================================
+
+class Sector(db.Model):
+    __tablename__ = 'sectors'
+    sector_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    companies = db.relationship('Company', backref='sector', lazy=True)

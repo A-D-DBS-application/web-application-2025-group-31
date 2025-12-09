@@ -42,7 +42,6 @@
 
         <a href="{{ url_for('main.companies') }}" class="button" style="margin-bottom:14px;">← Terug naar bedrijven</a>
 
-        <!-- EXPORT BUTTONS -->
         <div style="margin: 10px 0 20px 0;">
             <a class="button" href="{{ url_for('main.export_company', company_id=company.company_id, format='json') }}">
                 Export JSON
@@ -64,9 +63,6 @@
             </a>
         </div>
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 1: WEBSITE & IDENTITEIT -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Bedrijfsinformatie</h2>
@@ -80,15 +76,20 @@
                         <span class="tag">Geen website</span>
                     {% endif %}
                 </p>
-            </div>
+                
+                <p style="margin-top: 15px;"><strong>Sector:</strong><br>
+                    {% if company.sector %}
+                        <span class="tag tag-sector">{{ company.sector.name }}</span>
+                    {% else %}
+                        <span class="tag tag-unknown">Nog niet ingedeeld</span>
+                    {% endif %}
+                </p>
+                </div>
         </section>
 
 
 
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 2: AI SUMMARY -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">AI Summary</h2>
@@ -102,9 +103,6 @@
 
 
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 3: VALUE PROPOSITION -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Value Proposition</h2>
@@ -117,9 +115,6 @@
 
 
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 4: PRODUCT OVERVIEW -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Productbeschrijving</h2>
@@ -132,9 +127,6 @@
 
 
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 5: TARGET SEGMENT -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Doelgroep</h2>
@@ -147,9 +139,6 @@
 
 
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 6: PRICING -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Pricing</h2>
@@ -162,9 +151,6 @@
 
 
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 7: KEY FEATURES -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Belangrijkste Features</h2>
@@ -185,9 +171,6 @@
 
 
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 8: COMPETITORS -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Competitive Landscape</h2>
@@ -209,9 +192,6 @@
 
 
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 9: BUSINESS FUNDAMENTALS -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Business Fundamentals</h2>
@@ -247,9 +227,6 @@
         </section>
 
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 10: TRACTION SIGNALS -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Traction Signals</h2>
@@ -260,9 +237,6 @@
             </div>
         </section>
 
-        <!-- =============================================================== -->
-        <!-- BLOCK 11: HISTORISCHE TRENDS -->
-        <!-- =============================================================== -->
         <section class="card soft-shadow fade-in" style="margin-top: 20px;">
             <div class="card-header">
                 <h2 class="card-title">Historische trends</h2>
@@ -303,10 +277,6 @@
 
 
 
-        <!-- ========================================= -->
-        <!-- STRATEGISCHE WIJZIGINGEN (TOP 3 + MEER) -->
-        <!-- ========================================= -->
-
         <section class="card soft-shadow fade-in" style="margin-top: 20px;">
             <div class="card-header">
                 <h2 class="card-title">Strategische wijzigingen</h2>
@@ -344,6 +314,7 @@
 </div>
 
 <script>
+    // OPZET: DE FOUTIEVE ACCCOLADES ZIJN VERWIJDERD IN DEZE CODE
     const pricingLabels = {{ pricing_labels|tojson }};
     const pricingValues = {{ pricing_values|tojson }};
 
@@ -385,7 +356,3 @@
 
 </body>
 </html>
-
-
-
-
