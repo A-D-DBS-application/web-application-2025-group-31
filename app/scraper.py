@@ -3,10 +3,15 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# Load API key safely
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise RuntimeError("OPENAI_API_KEY ontbreekt")
 
+client = OpenAI(api_key=api_key)
+print("ENV OPENAI_API_KEY =", os.getenv("OPENAI_API_KEY"))
 
 # ==========================================================
 # 1. FETCH RAW HTML TEXT
