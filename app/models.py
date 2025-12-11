@@ -13,7 +13,7 @@ class Company(db.Model):
     # Klassieke scrapingvelden
     headquarters = db.Column(db.Text)
     team_size = db.Column(db.Integer)
-    funding = db.Column(db.Numeric)
+    funding = db.Column(db.Text)
     office_locations = db.Column(db.Text)
     traction_signals = db.Column(db.Text)
     funding_history = db.Column(db.Text)

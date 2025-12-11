@@ -217,8 +217,15 @@
                 </p>
 
                 <p><strong>Total Funding:</strong><br>
-                    {{ company.funding or "Onbekend" }}
+                    {% if company.funding %}
+                        {{ company.funding }}
+                    {% elif company.funding_history %}
+                        {{ company.funding_history }}
+                    {% else %}
+                        Onbekend
+                    {% endif %}
                 </p>
+
 
                 <p><strong>Funding History:</strong><br>
                     {{ company.funding_history or "Geen gegevens" }}

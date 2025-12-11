@@ -493,7 +493,7 @@ def refresh_all_companies():
                 existing.headquarters = result.get("headquarters")
                 existing.office_locations = result.get("office_locations")
                 existing.team_size = safe_int(result.get("team_size"))
-                existing.funding = safe_float(result.get("funding"))
+                existing.funding = result.get("funding")
                 existing.funding_history = result.get("funding_history")
                 existing.traction_signals = result.get("traction_signals")
                 existing.ai_summary = result.get("ai_summary")
@@ -1238,7 +1238,7 @@ def scrape():
         existing.headquarters = result.get("headquarters")
         existing.office_locations = result.get("office_locations")
         existing.team_size = safe_int(result.get("team_size"))
-        existing.funding = safe_float(result.get("funding"))
+        existing.funding = result.get("funding")
         existing.funding_history = result.get("funding_history")
         existing.traction_signals = result.get("traction_signals")
         existing.ai_summary = result.get("ai_summary")
@@ -1274,7 +1274,7 @@ def scrape():
         headquarters=result.get("headquarters"),
         office_locations=result.get("office_locations"),
         team_size=safe_int(result.get("team_size")),
-        funding=safe_float(result.get("funding")),
+        funding=result.get("funding"),
         funding_history=result.get("funding_history"),
         traction_signals=result.get("traction_signals"),
         ai_summary=result.get("ai_summary"),
