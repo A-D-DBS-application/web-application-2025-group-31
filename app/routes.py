@@ -899,42 +899,41 @@ def companies():
 
     message = ""
 
+    # Alleen nog watchlist-actie toelaten (geen manual add meer)
     if request.method == 'POST':
         form_type = request.form.get('form_type')
 
-        if form_type == 'add_company':
+        if form_type == 'add_to_watchlist':
             try:
-                new_company = Company(
-                    name=request.form.get('name'),
-                    website_url=request.form.get('website_url'),
-                    headquarters=request.form.get('headquarters'),
-                    team_size=safe_int(request.form.get('team_size')),
-                    funding=safe_float(request.form.get('funding'))
-                )
+                cid = int(request.form.get('company_id'))
+                wl = session.get('watchlist_companies', [])
+                if cid not in wl:
+                    wl.append(cid)
+                session['watchlist_companies'] = wl
+                message = "✔ Toegevoegd aan watchlist"
+            except Exception:
+                message = "❌ Kon niet aan watchlist toevoegen."
 
-                db.session.add(new_company)
-                db.session.flush()
-                db.session.add(AuditLog(
-                    company_id=new_company.company_id,
-                    source_name="Manual entry",
-                    source_url=new_company.website_url or "—"
-                ))
-                db.session.commit()
-                message = "✔ Bedrijf toegevoegd!"
+    # --- Sectorfilter uit querystring ---
+    selected_sector_id = request.args.get('sector_id', type=int)
 
-            except Exception as e:
-                message = f"❌ Fout: {e}"
+    query = Company.query
 
-        elif form_type == 'add_to_watchlist':
-            cid = int(request.form.get('company_id'))
-            wl = session.get('watchlist_companies', [])
-            if cid not in wl:
-                wl.append(cid)
-            session['watchlist_companies'] = wl
-            message = "✔ Toegevoegd aan watchlist"
+    if selected_sector_id:
+        query = query.filter(Company.sector_id == selected_sector_id)
 
-    all_companies = Company.query.all()
-    return render_template('companies.html', companies=all_companies, message=message)
+    companies = query.all()
+
+    # Alle sectoren voor de dropdown
+    sectors = Sector.query.order_by(Sector.name.asc()).all()
+
+    return render_template(
+        'companies.html',
+        companies=companies,
+        sectors=sectors,
+        selected_sector_id=selected_sector_id,
+        message=message
+    )
 
 
 # =====================================================

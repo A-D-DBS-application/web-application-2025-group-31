@@ -34,7 +34,7 @@
         <div class="topbar">
             <div class="topbar-left">
                 <h1>Bedrijvenbeheer</h1>
-                <p class="subtitle">Voeg bedrijven toe of beheer je database.</p>
+                <p class="subtitle">Beheer je bedrijven en filter op sector.</p>
             </div>
         </div>
 
@@ -42,6 +42,7 @@
             <p class="alert success">{{ message }}</p>
         {% endif %}
         
+        <!-- SECTOR FILTER -->
         <div style="margin-bottom: 20px;">
             <form method="GET" action="{{ url_for('main.companies') }}" style="display:inline-block;">
                 <label for="sector_filter">Filter op Sector:</label>
@@ -58,37 +59,7 @@
             </form>
         </div>
 
-        <section class="card soft-shadow fade-in">
-            <div class="card-header">
-                <h2 class="card-title">Nieuw bedrijf toevoegen</h2>
-                <div class="card-meta">De basisinfo wordt weggeschreven in Supabase.</div>
-            </div>
-            <div class="card-body">
-
-                <form method="POST" class="auth-form">
-                    <input type="hidden" name="form_type" value="add_company">
-
-                    <label>Naam *</label>
-                    <input type="text" name="name" required>
-
-                    <label>Website</label>
-                    <input type="text" name="website_url" placeholder="https://bedrijf.nl">
-                    
-                    <label>Hoofdkantoor</label>
-                    <input type="text" name="headquarters" placeholder="Stad, Land">
-
-                    <label>Teamgrootte</label>
-                    <input type="number" name="team_size">
-
-                    <label>Funding (€)</label>
-                    <input type="number" step="0.01" name="funding">
-
-                    <button class="button full" style="margin-top:10px;">Opslaan</button>
-                </form>
-
-            </div>
-        </section>
-
+        <!-- BESTAANDE BEDRIJVEN -->
         <section class="card card-muted soft-shadow fade-in">
             <div class="card-header">
                 <h2 class="card-title">Bestaande bedrijven</h2>
@@ -101,7 +72,7 @@
                             <thead>
                                 <tr>
                                     <th>Naam</th>
-                                    <th>Sector</th> 
+                                    <th>Sector</th>
                                     <th>Website</th>
                                     <th>Hoofdkantoor</th>
                                     <th>Team</th>
@@ -144,12 +115,14 @@
 
                                         <td style="white-space:nowrap;">
 
+                                            <!-- Naar watchlist -->
                                             <form method="POST" style="display:inline;">
                                                 <input type="hidden" name="form_type" value="add_to_watchlist">
                                                 <input type="hidden" name="company_id" value="{{ c.company_id }}">
                                                 <button class="button" style="padding:4px 8px; font-size:12px;">Watchlist</button>
                                             </form>
 
+                                            <!-- Naar baseline / detail -->
                                             <a
                                                 href="{{ url_for('main.company_detail', company_id=c.company_id) }}"
                                                 class="button"
@@ -157,12 +130,14 @@
                                                 Baseline
                                             </a>
                                             
+                                            <!-- Delete -->
                                             <form action="{{ url_for('main.delete_company', company_id=c.company_id) }}"
                                                 method="POST" style="display:inline;">
                                                 <button class="button"
                                                         style="padding:4px 8px; font-size:12px; margin-left:4px; background:#b50000;">
                                                     Delete
-                                                </button></form>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 {% endfor %}

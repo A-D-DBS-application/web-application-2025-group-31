@@ -41,7 +41,6 @@ class Company(db.Model):
 
     # Relaties
     metrics = db.relationship('Metric', back_populates='company', cascade="all, delete")
-    reports = db.relationship('Report', back_populates='company', cascade="all, delete")
     audit_logs = db.relationship('AuditLog', back_populates='company', cascade="all, delete")
     change_events = db.relationship('ChangeEvent', back_populates='company', cascade="all, delete")
 
@@ -69,8 +68,6 @@ class AppUser(db.Model):
     weekly_digest = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
-    # Relaties
-    reports = db.relationship('Report', back_populates='user')
     watchlist = db.relationship('UserWatchlist', back_populates='user', cascade="all, delete")
 
     def __repr__(self):
@@ -125,32 +122,6 @@ class Metric(db.Model):
 
     def __repr__(self):
         return f"<Metric {self.name} ({self.company_id})>"
-
-
-# ======================================
-# TABLE: Report
-# ======================================
-class Report(db.Model):
-    __tablename__ = 'report'
-
-    report_id = db.Column(db.BigInteger, primary_key=True)
-    generated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
-    summary = db.Column(db.Text)
-
-    user_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey('app_user.user_id', ondelete="SET NULL")
-    )
-    company_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey('company.company_id', ondelete="CASCADE")
-    )
-
-    user = db.relationship('AppUser', back_populates='reports')
-    company = db.relationship('Company', back_populates='reports')
-
-    def __repr__(self):
-        return f"<Report {self.report_id} - Company {self.company_id}>"
 
 
 # ======================================
