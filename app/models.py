@@ -44,9 +44,6 @@ class Company(db.Model):
     audit_logs = db.relationship('AuditLog', back_populates='company', cascade="all, delete")
     change_events = db.relationship('ChangeEvent', back_populates='company', cascade="all, delete")
 
-    # Watchlist M2M
-    watchers = db.relationship('UserWatchlist', back_populates='company', cascade="all, delete")
-
     # Sector-relatie (inverse van Sector.companies)
     sector = db.relationship('Sector', back_populates='companies')
 
@@ -68,35 +65,8 @@ class AppUser(db.Model):
     weekly_digest = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
-    watchlist = db.relationship('UserWatchlist', back_populates='user', cascade="all, delete")
-
     def __repr__(self):
         return f"<AppUser {self.username}>"
-
-
-# ======================================
-# TABLE: UserWatchlist
-# ======================================
-class UserWatchlist(db.Model):
-    __tablename__ = 'user_watchlist'
-
-    id = db.Column(db.BigInteger, primary_key=True)
-    user_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey('app_user.user_id', ondelete="CASCADE")
-    )
-    company_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey('company.company_id', ondelete="CASCADE")
-    )
-    added_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
-    digest_enabled = db.Column(db.Boolean, default=False)
-
-    user = db.relationship('AppUser', back_populates='watchlist')
-    company = db.relationship('Company', back_populates='watchers')
-
-    def __repr__(self):
-        return f"<UserWatchlist user={self.user_id}, company={self.company_id}>"
 
 
 # ======================================
