@@ -71,7 +71,7 @@
 
         <div class="topbar">
             <h1>Nieuwe Webanalyse</h1>
-            <p class="subtitle">Plak hieronder een website URL. Rival analyseert automatisch.</p>
+            <p class="subtitle">Plak hieronder een website URL, kies optioneel een sector. Rival analyseert automatisch.</p>
         </div>
 
         {% if result and result.error %}
@@ -86,9 +86,27 @@
 
             <div class="card-body">
                 <form method="POST" class="auth-form" id="scrapeForm">
+
                     <label>Website URL</label>
-                    <input type="text" name="url" placeholder="https://voorbeeld.nl" required>
-                    <button class="button full" type="submit" style="margin-top: 8px;">Analyse uitvoeren</button>
+                    <input 
+                        type="text" 
+                        name="url" 
+                        placeholder="https://voorbeeld.nl" 
+                        required
+                        value="{{ request.args.get('url', '') }}"
+                    >
+
+                    <label style="margin-top: 12px;">Sector (optioneel)</label>
+                    <select name="sector_id">
+                        <option value="">-- kies een sector --</option>
+                        {% for s in sectors %}
+                            <option value="{{ s.sector_id }}">{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <button class="button full" type="submit" style="margin-top: 14px;">
+                        Analyse uitvoeren
+                    </button>
                 </form>
             </div>
         </section>
@@ -117,6 +135,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 </body>
 </html>
+
+
 
 
 

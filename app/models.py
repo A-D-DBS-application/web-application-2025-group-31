@@ -19,17 +19,25 @@ class Company(db.Model):
     funding_history = db.Column(db.Text)
 
     # AI-baseline velden
-    ai_summary = db.Column(db.Text)                 
+    ai_summary = db.Column(db.Text)
     value_proposition = db.Column(db.Text)
     product_description = db.Column(db.Text)
     target_segment = db.Column(db.Text)
     pricing = db.Column(db.Text)
-    key_features = db.Column(db.JSON)               # JSONB in database
-    competitors = db.Column(db.JSON)                # JSONB in database
+    key_features = db.Column(db.JSON)   # JSONB in database
+    competitors = db.Column(db.JSON)    # JSONB in database
 
-    # NIEUW: Link naar de sectors tabel
-    sector_id = db.Column(db.Integer, db.ForeignKey('sectors.sector_id'), nullable=True)
-    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
+    # Link naar de sectors tabel (FK → sectors.sector_id)
+    sector_id = db.Column(
+        db.Integer,
+        db.ForeignKey('sectors.sector_id'),
+        nullable=True
+    )
+
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        server_default=db.func.now()
+    )
 
     # Relaties
     metrics = db.relationship('Metric', back_populates='company', cascade="all, delete")
@@ -40,9 +48,11 @@ class Company(db.Model):
     # Watchlist M2M
     watchers = db.relationship('UserWatchlist', back_populates='company', cascade="all, delete")
 
+    # Sector-relatie (inverse van Sector.companies)
+    sector = db.relationship('Sector', back_populates='companies')
+
     def __repr__(self):
         return f"<Company {self.name}>"
-
 
 
 # ======================================
@@ -68,16 +78,22 @@ class AppUser(db.Model):
 
 
 # ======================================
-# TABLE: UserWatchlist (GECORRIGEERD)
+# TABLE: UserWatchlist
 # ======================================
 class UserWatchlist(db.Model):
     __tablename__ = 'user_watchlist'
 
     id = db.Column(db.BigInteger, primary_key=True)
-    user_id = db.Column(db.BigInteger, db.ForeignKey('app_user.user_id', ondelete="CASCADE"))
-    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
+    user_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('app_user.user_id', ondelete="CASCADE")
+    )
+    company_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('company.company_id', ondelete="CASCADE")
+    )
     added_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
-    digest_enabled = db.Column(db.Boolean, default=False) 
+    digest_enabled = db.Column(db.Boolean, default=False)
 
     user = db.relationship('AppUser', back_populates='watchlist')
     company = db.relationship('Company', back_populates='watchers')
@@ -93,7 +109,10 @@ class Metric(db.Model):
     __tablename__ = 'metric'
 
     metric_id = db.Column(db.BigInteger, primary_key=True)
-    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
+    company_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('company.company_id', ondelete="CASCADE")
+    )
 
     name = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
@@ -118,8 +137,14 @@ class Report(db.Model):
     generated_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     summary = db.Column(db.Text)
 
-    user_id = db.Column(db.BigInteger, db.ForeignKey('app_user.user_id', ondelete="SET NULL"))
-    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
+    user_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('app_user.user_id', ondelete="SET NULL")
+    )
+    company_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('company.company_id', ondelete="CASCADE")
+    )
 
     user = db.relationship('AppUser', back_populates='reports')
     company = db.relationship('Company', back_populates='reports')
@@ -139,7 +164,10 @@ class AuditLog(db.Model):
     source_url = db.Column(db.Text)
     retrieved_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
-    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
+    company_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('company.company_id', ondelete="CASCADE")
+    )
     company = db.relationship('Company', back_populates='audit_logs')
 
     def __repr__(self):
@@ -157,16 +185,19 @@ class ChangeEvent(db.Model):
     description = db.Column(db.Text)
     detected_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
-    company_id = db.Column(db.BigInteger, db.ForeignKey('company.company_id', ondelete="CASCADE"))
+    company_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey('company.company_id', ondelete="CASCADE")
+    )
     company = db.relationship('Company', back_populates='change_events')
 
     def __repr__(self):
         return f"<ChangeEvent {self.event_type}>"
 
+
 # ======================================
 # TABLE: MetricHistory
 # ======================================
-
 class MetricHistory(db.Model):
     __tablename__ = 'metric_history'
 
@@ -199,13 +230,18 @@ class MetricHistory(db.Model):
         return f"<MetricHistory {self.name} ({self.company_id}) [{self.source}]>"
 
 
-
 # ======================================
-# TABLE: Sector 
+# TABLE: Sector
 # ======================================
-
 class Sector(db.Model):
     __tablename__ = 'sectors'
+
+    # ⬅️ Primaire sleutel (belangrijk voor SQLAlchemy)
     sector_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    companies = db.relationship('Company', backref='sector', lazy=True)
+
+    # Inverse relatie naar Company.sector
+    companies = db.relationship('Company', back_populates='sector', lazy=True)
+
+    def __repr__(self):
+        return f"<Sector {self.name}>"

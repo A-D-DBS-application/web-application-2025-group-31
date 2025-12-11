@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from app.models import AppUser, Company, Metric, AuditLog, ChangeEvent, MetricHistory
+from app.models import AppUser, Company, Metric, AuditLog, ChangeEvent, MetricHistory, Sector
 from decimal import Decimal
 import csv
 import io
@@ -1129,19 +1129,39 @@ def scrape():
     if 'user_id' not in session:
         return redirect(url_for('main.login'))
 
+    # URL uit querystring (bijv. quick scrape vanuit dashboard)
     url_from_query = request.args.get("url")
 
-    if request.method == 'GET' and not url_from_query:
-        return render_template('scrape.html', result=None)
+    # alle sectoren ophalen voor dropdown
+    sectors = Sector.query.order_by(Sector.name.asc()).all()
 
+    # GET zonder url → lege pagina met formulier
+    if request.method == 'GET' and not url_from_query:
+        return render_template('scrape.html', result=None, sectors=sectors)
+
+    # URL kan uit querystring (GET) of uit formulier (POST) komen
     url = url_from_query or request.form.get('url')
+
+    # DEBUG: toon request.form bij POST
+    if request.method == 'POST':
+        print("DEBUG scrape POST form:", dict(request.form))
+
     if not url:
-        return render_template('scrape.html', result={'error': "Geen URL opgegeven."})
+        return render_template('scrape.html', result={'error': "Geen URL opgegeven."}, sectors=sectors)
+
+    # sector_id komt alleen uit formulier (POST)
+    sector_id_raw = request.form.get('sector_id')
+    try:
+        sector_id = int(sector_id_raw) if sector_id_raw else None
+    except ValueError:
+        sector_id = None
+
+    print("DEBUG gekozen sector_id:", sector_id)
 
     # --- SCRAPEN ---
     result = scrape_website(url)
     if result.get("error"):
-        return render_template('scrape.html', result=result)
+        return render_template('scrape.html', result=result, sectors=sectors)
 
     # --- CHECK OF BEDRIJF BESTAAT ---
     existing = Company.query.filter_by(website_url=url).first()
@@ -1150,16 +1170,13 @@ def scrape():
     # UPDATE BESTAAND BEDRIJF
     # ============================================
     if existing:
+        print("DEBUG: bestaand bedrijf, id =", existing.company_id)
 
-        # ----------------------------------------
-        # 1) STRATEGIC MOVE DETECTION
-        # ----------------------------------------
+        # STRATEGIC MOVE DETECTION (ongewijzigd)
         change_events = []
 
-        # ===== FEATURES =====
         old_features = normalize_list(existing.key_features)
         new_features = normalize_list(result.get("key_features"))
-
         added_features = [f for f in new_features if f not in old_features]
         removed_features = [f for f in old_features if f not in new_features]
 
@@ -1175,10 +1192,8 @@ def scrape():
                 "description": f"Feature verwijderd: {f}"
             })
 
-        # ===== PRICING =====
         old_price = existing.pricing or ""
         new_price = result.get("pricing") or ""
-
         if not texts_similar(old_price, new_price):
             if old_price and new_price:
                 change_events.append({
@@ -1196,27 +1211,22 @@ def scrape():
                     "description": "Pricing verwijderd"
                 })
 
-        # ===== PRODUCT DESCRIPTION =====
         old_product = existing.product_description or ""
         new_product = result.get("product_description") or ""
-
         if not texts_similar(old_product, new_product):
             change_events.append({
                 "event_type": "product_change",
                 "description": "Productbeschrijving gewijzigd (mogelijke nieuwe productlijn)"
             })
 
-        # ===== TARGET SEGMENT =====
         old_segment = existing.target_segment or ""
         new_segment = result.get("target_segment") or ""
-
         if not texts_similar(old_segment, new_segment):
             change_events.append({
                 "event_type": "segment_change",
                 "description": "Target segment gewijzigd"
             })
 
-        # Sla alle echte wijzigingen op
         for ev in change_events:
             db.session.add(ChangeEvent(
                 company_id=existing.company_id,
@@ -1224,18 +1234,14 @@ def scrape():
                 description=ev["description"]
             ))
 
-        # ----------------------------------------
-        # 2) UPDATE BEDRIJFSGEGEVENS
-        # ----------------------------------------
+        # --- BEDRIJFSGEGEVENS UPDATEN ---
         existing.name = result.get("title") or existing.name
-
         existing.headquarters = result.get("headquarters")
         existing.office_locations = result.get("office_locations")
         existing.team_size = safe_int(result.get("team_size"))
         existing.funding = safe_float(result.get("funding"))
         existing.funding_history = result.get("funding_history")
         existing.traction_signals = result.get("traction_signals")
-
         existing.ai_summary = result.get("ai_summary")
         existing.value_proposition = result.get("value_proposition")
         existing.product_description = result.get("product_description")
@@ -1244,16 +1250,19 @@ def scrape():
         existing.key_features = result.get("key_features")
         existing.competitors = result.get("competitors")
 
-        # ----------------------------------------
-        # 3) METRICS UPDATEN IN SUPABASE
-        # ----------------------------------------
-        update_company_metrics(existing)
+        # 🔥 HIER sector_id ZETTEN
+        if sector_id is not None:
+            print("DEBUG: existing.company.sector_id vóór:", existing.sector_id)
+            existing.sector_id = sector_id
+            print("DEBUG: existing.company.sector_id ná:", existing.sector_id)
 
+        # METRICS + HISTORIEK
+        update_company_metrics(existing)
         historical = result.get("historical_metrics", [])
         backfill_historical_metrics(existing.company_id, historical)
 
-
         db.session.commit()
+        print("DEBUG: commit gedaan (bestaand bedrijf)")
 
         return redirect(url_for('main.company_detail', company_id=existing.company_id))
 
@@ -1263,22 +1272,25 @@ def scrape():
     new_company = Company(
         name=result.get("title") or "Onbekend bedrijf",
         website_url=url,
-
         headquarters=result.get("headquarters"),
         office_locations=result.get("office_locations"),
         team_size=safe_int(result.get("team_size")),
         funding=safe_float(result.get("funding")),
         funding_history=result.get("funding_history"),
         traction_signals=result.get("traction_signals"),
-
         ai_summary=result.get("ai_summary"),
         value_proposition=result.get("value_proposition"),
         product_description=result.get("product_description"),
         target_segment=result.get("target_segment"),
         pricing=result.get("pricing"),
         key_features=result.get("key_features"),
-        competitors=result.get("competitors")
+        competitors=result.get("competitors"),
     )
+
+    if sector_id is not None:
+        print("DEBUG: new_company.sector_id vóór:", new_company.sector_id)
+        new_company.sector_id = sector_id
+        print("DEBUG: new_company.sector_id ná:", new_company.sector_id)
 
     db.session.add(new_company)
     db.session.flush()  # zodat new_company.company_id bestaat
@@ -1289,15 +1301,16 @@ def scrape():
         source_url=url
     ))
 
-    # METRICS AANMAKEN VOOR DIT NIEUWE BEDRIJF
     update_company_metrics(new_company)
-
     historical = result.get("historical_metrics", [])
     backfill_historical_metrics(new_company.company_id, historical)
 
     db.session.commit()
+    print("DEBUG: commit gedaan (nieuw bedrijf)")
 
     return redirect(url_for('main.company_detail', company_id=new_company.company_id))
+
+
 
 
 # =====================================================
