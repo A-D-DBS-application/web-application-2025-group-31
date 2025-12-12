@@ -107,11 +107,12 @@
 
                                         <td>
                                             {% if c.funding %}
-                                                €{{ '{:,.0f}'.format(c.funding) }}
+                                                €{{ c.funding }}
                                             {% else %}
                                                 –
                                             {% endif %}
                                         </td>
+
 
                                         <td style="white-space:nowrap;">
 
