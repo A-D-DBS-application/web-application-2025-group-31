@@ -1,0 +1,39 @@
+<aside class="sidebar soft-shadow">
+  <div class="sidebar-header">
+    <h2>RIVAL</h2>
+    <div class="sidebar-tagline">Competitive intelligence</div>
+  </div>
+
+  <nav>
+    <a href="{{ url_for('main.dashboard') }}"
+       class="{% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+      <span class="label"><span class="dot"></span><span>Dashboard</span></span>
+    </a>
+
+    <a href="{{ url_for('main.watchlist') }}"
+       class="{% if request.endpoint == 'main.watchlist' %}active{% endif %}">
+      <span class="label"><span class="dot"></span><span>Watchlist</span></span>
+    </a>
+
+    <a href="{{ url_for('main.companies') }}"
+       class="{% if request.endpoint in ['main.companies','main.company_detail'] %}active{% endif %}">
+      <span class="label"><span class="dot"></span><span>Bedrijven</span></span>
+    </a>
+
+    <a href="{{ url_for('main.all_alerts') }}"
+       class="{% if request.endpoint in ['main.all_alerts','main.company_alerts'] %}active{% endif %}">
+      <span class="label"><span class="dot"></span><span>Meldingen</span></span>
+    </a>
+
+    <a href="{{ url_for('main.weekly_mail_settings') }}"
+       class="{% if request.endpoint == 'main.weekly_mail_settings' %}active{% endif %}">
+      <span class="label"><span class="dot"></span><span>Newsletter</span></span>
+    </a>
+
+    <a href="{{ url_for('main.logout') }}">
+      <span class="label"><span class="dot"></span><span>Uitloggen</span></span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">Rival · MVP</div>
+</aside>

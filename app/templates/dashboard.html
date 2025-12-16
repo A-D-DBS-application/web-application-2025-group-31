@@ -1,251 +1,191 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard | Rival</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+{% extends "base.html" %}
+{% block title %}Dashboard | Rival{% endblock %}
 
-<body>
-<div class="layout">
+{% block content %}
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar soft-shadow">
-        <div class="sidebar-header">
-            <h2>RIVAL</h2>
-            <div class="sidebar-tagline">Competitive Intelligence</div>
+<!-- PAGE HEADER -->
+<section class="page-header mb-30">
+  <h1 class="page-title">Intelligence Dashboard</h1>
+  <p class="subtitle max-w-650">
+    Start nieuwe analyses, beheer je watchlist en volg strategische marktbewegingen.
+    Dit overzicht vormt jouw centrale hub voor competitieve inzichten.
+  </p>
+</section>
+
+<!-- QUICK ACTIONS -->
+<section class="grid-3 fade-in mb-35">
+
+  <div class="card soft-shadow pad-22">
+    <h3 class="card-title">Nieuwe Analyse</h3>
+    <p class="subtitle">
+      Genereer automatisch een baseline-rapportage op basis van een bedrijfswebsite.
+    </p>
+    <a href="{{ url_for('main.scrape') }}" class="button small">Start analyse</a>
+  </div>
+
+  <div class="card soft-shadow pad-22">
+    <h3 class="card-title">Watchlist</h3>
+    <p class="subtitle">
+      Overzicht van alle bedrijven die je actief opvolgt.
+    </p>
+    <a href="{{ url_for('main.watchlist') }}" class="button small">Bekijk watchlist</a>
+  </div>
+
+  <div class="card soft-shadow pad-22">
+    <h3 class="card-title">Configuratie</h3>
+    <p class="subtitle">
+      Selecteer bedrijven, metrics en competitors voor opvolging.
+    </p>
+    <a href="#config" class="button small">Open instellingen</a>
+  </div>
+
+</section>
+
+<!-- WATCHLIST Overview -->
+<section class="card soft-shadow fade-in mb-35">
+  <div class="card-header">
+    <h2 class="card-title">Watchlist</h2>
+    <div class="card-meta">Bedrijven die je actief opvolgt</div>
+  </div>
+
+  <div class="card-body">
+    {% if watchlist %}
+      <ul class="soft-list">
+        {% for item in watchlist %}
+          <li>{{ item }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-state">
+        <h3>Geen bedrijven in watchlist</h3>
+        <p class="subtitle">Voeg bedrijven toe om strategische signalen te monitoren.</p>
+        <a href="{{ url_for('main.companies') }}" class="button small">Bedrijven beheren</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- CONFIGURATION PANEL -->
+<section id="config" class="card soft-shadow fade-in mb-35">
+  <div class="card-header">
+    <h2 class="card-title">Watchlist & Competitor Tracking</h2>
+    <div class="card-meta">
+      Configureer welke bedrijven, metrics en concurrenten Rival moet volgen.
+    </div>
+  </div>
+
+  <div class="card-body">
+
+    <!-- WATCHLIST CONFIG -->
+    <form method="POST" class="mb-30">
+      <input type="hidden" name="form_type" value="watchlist_config">
+
+      <h3>Watchlist instellingen</h3>
+
+      <div class="grid-2">
+
+        <div>
+          <h4>Bedrijven</h4>
+          <ul class="soft-list scroll">
+            {% for c in companies %}
+              <li>
+                <label class="checkbox-line">
+                  <input type="checkbox" name="companies" value="{{ c.company_id }}"
+                    {% if c.company_id in session.get('watchlist_companies', []) %}checked{% endif %}>
+                  {{ c.name }}
+                </label>
+              </li>
+            {% endfor %}
+          </ul>
         </div>
 
-        <nav>
-            <a href="{{ url_for('main.dashboard') }}" class="active">
-                <span class="label"><span class="dot"></span><span>Dashboard</span></span>
-            </a>
-
-            <a href="{{ url_for('main.watchlist') }}">
-                <span class="label"><span class="dot"></span><span>Watchlist</span></span>
-            </a>
-
-            <a href="{{ url_for('main.companies') }}">
-                <span class="label"><span class="dot"></span><span>Bedrijven</span></span>
-            </a>
-
-            <a href="{{ url_for('main.weekly_mail_settings') }}">
-                <span class="label"><span class="dot"></span><span>Newsletter</span></span>
-            </a>
-
-            <a href="{{ url_for('main.logout') }}">
-                <span class="label"><span class="dot"></span><span>Uitloggen</span></span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            Rival · v0.1 · Internal Demo
+        <div>
+          <h4>Metrics</h4>
+          <ul class="soft-list scroll">
+            {% for m in metric_options %}
+              <li>
+                <label class="checkbox-line">
+                  <input type="checkbox" name="metrics" value="{{ m }}"
+                    {% if m in metrics_selected %}checked{% endif %}>
+                  {{ m }}
+                </label>
+              </li>
+            {% endfor %}
+          </ul>
         </div>
-    </aside>
 
+      </div>
 
-    <!-- MAIN CONTENT -->
-    <main class="content fade-in">
+      <button type="submit" class="button small mt-10">Opslaan</button>
+    </form>
 
-        <!-- PAGE HEADER (Similarweb-stijl) -->
-        <section class="page-header" style="margin-bottom:30px;">
-            <h1 class="page-title">Intelligence Dashboard</h1>
-            <p class="subtitle" style="max-width:650px;">
-                Start nieuwe analyses, beheer je watchlist en volg strategische marktbewegingen.
-                Dit overzicht vormt jouw centrale hub voor competitieve inzichten.
-            </p>
-        </section>
+    <!-- COMPETITOR CONFIG -->
+    <form method="POST">
+      <input type="hidden" name="form_type" value="competitor_config">
 
+      <h3>Competitor tracking</h3>
+      <p class="subtitle">Selecteer welke concurrenten Rival actief moet opvolgen.</p>
 
-        <!-- QUICK ACTIONS: zoals Similarweb, maar met jouw bestaande functies -->
-        <section class="grid-3 fade-in" style="margin-bottom:35px;">
+      <ul class="soft-list scroll">
+        {% for comp in all_competitors %}
+          <li>
+            <label class="checkbox-line">
+              <input type="checkbox" name="competitors" value="{{ comp }}"
+                {% if comp in competitors_selected %}checked{% endif %}>
+              {{ comp }}
+            </label>
+          </li>
+        {% endfor %}
+      </ul>
 
-            <!-- Nieuwe Analyse -->
-            <div class="card soft-shadow" style="padding:22px;">
-                <h3 class="card-title">Nieuwe Analyse</h3>
-                <p class="subtitle">
-                    Genereer automatisch een baseline-rapportage op basis van een bedrijfswebsite.
-                </p>
-                <a href="{{ url_for('main.scrape') }}" class="button small">Start analyse</a>
-            </div>
+      <button type="submit" class="button small mt-10">Opslaan</button>
+    </form>
 
-            <!-- Watchlist -->
-            <div class="card soft-shadow" style="padding:22px;">
-                <h3 class="card-title">Watchlist</h3>
-                <p class="subtitle">
-                    Overzicht van alle bedrijven die je actief opvolgt.
-                </p>
-                <a href="{{ url_for('main.watchlist') }}" class="button small">Bekijk watchlist</a>
-            </div>
+  </div>
+</section>
 
-            <!-- Configuratie -->
-            <div class="card soft-shadow" style="padding:22px;">
-                <h3 class="card-title">Configuratie</h3>
-                <p class="subtitle">
-                    Selecteer bedrijven, metrics en competitors voor opvolging.
-                </p>
-                <a href="#config" class="button small">Open instellingen</a>
-            </div>
+<!-- ALERTS SECTION -->
+<section class="card soft-shadow fade-in">
+  <div class="card-header">
+    <h2 class="card-title">Recente Meldingen</h2>
+    <div class="card-meta">Strategische updates op basis van jouw selectie</div>
+  </div>
 
-        </section>
+  <div class="card-body">
+    {% if alerts %}
+      <ul class="soft-list">
+        {% for a in alerts %}
+          <li class="list-item-12">
+            <strong>{{ a.type }}</strong> —
+            <a href="{{ url_for('main.company_detail', company_id=a['company_id']) }}">
+              {{ a.description }}
+            </a>
+            <br>
+            <span class="badge-soft">{{ a.time.strftime('%Y-%m-%d') }}</span>
+          </li>
+        {% endfor %}
+      </ul>
 
+      {% if more_alerts_count > 0 %}
+        <div class="mt-10">
+          <a href="{{ url_for('main.all_alerts') }}" class="button small">
+            Meer meldingen ({{ more_alerts_count }})
+          </a>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty-state">
+        <h3>Geen recente meldingen</h3>
+        <p class="subtitle">
+          Nieuwe strategische signalen verschijnen automatisch in dit overzicht.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</section>
 
-        <!-- WATCHLIST Overview - Similarweb-achtige presentatie -->
-        <section class="card soft-shadow fade-in" style="margin-bottom:35px;">
-            <div class="card-header">
-                <h2 class="card-title">Watchlist</h2>
-                <div class="card-meta">Bedrijven die je actief opvolgt</div>
-            </div>
+{% endblock %}
 
-            <div class="card-body">
-                {% if watchlist %}
-                    <ul class="soft-list">
-                        {% for item in watchlist %}
-                        <li>{{ item }}</li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <div class="empty-state">
-                        <h3>Geen bedrijven in watchlist</h3>
-                        <p class="subtitle">Voeg bedrijven toe om strategische signalen te monitoren.</p>
-                        <a href="{{ url_for('main.companies') }}" class="button small">Bedrijven beheren</a>
-                    </div>
-                {% endif %}
-            </div>
-        </section>
-
-
-        <!-- CONFIGURATION PANEL -->
-        <section id="config" class="card soft-shadow fade-in" style="margin-bottom:35px;">
-            <div class="card-header">
-                <h2 class="card-title">Watchlist & Competitor Tracking</h2>
-                <div class="card-meta">
-                    Configureer welke bedrijven, metrics en concurrenten Rival moet volgen.
-                </div>
-            </div>
-
-            <div class="card-body">
-
-                <!-- WATCHLIST CONFIG -->
-                <form method="POST" style="margin-bottom:30px;">
-                    <input type="hidden" name="form_type" value="watchlist_config">
-
-                    <h3>Watchlist instellingen</h3>
-
-                    <div class="grid-2">
-
-                        <!-- Bedrijven -->
-                        <div>
-                            <h4>Bedrijven</h4>
-                            <ul class="soft-list" style="max-height:200px; overflow:auto;">
-                                {% for c in companies %}
-                                <li>
-                                    <label class="checkbox-line">
-                                        <input type="checkbox" name="companies" value="{{ c.company_id }}"
-                                            {% if c.company_id in session.get('watchlist_companies', []) %}checked{% endif %}>
-                                        {{ c.name }}
-                                    </label>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-
-                        <!-- Metrics -->
-                        <div>
-                            <h4>Metrics</h4>
-                            <ul class="soft-list" style="max-height:200px; overflow:auto;">
-                                {% for m in metric_options %}
-                                <li>
-                                    <label class="checkbox-line">
-                                        <input type="checkbox" name="metrics" value="{{ m }}"
-                                            {% if m in metrics_selected %}checked{% endif %}>
-                                        {{ m }}
-                                    </label>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-
-                    </div>
-
-                    <button type="submit" class="button small" style="margin-top:10px;">Opslaan</button>
-                </form>
-
-
-
-                <!-- COMPETITOR CONFIG -->
-                <form method="POST">
-                    <input type="hidden" name="form_type" value="competitor_config">
-
-                    <h3>Competitor tracking</h3>
-                    <p class="subtitle">Selecteer welke concurrenten Rival actief moet opvolgen.</p>
-
-                    <ul class="soft-list" style="max-height:220px; overflow:auto;">
-                        {% for comp in all_competitors %}
-                        <li>
-                            <label class="checkbox-line">
-                                <input type="checkbox" name="competitors" value="{{ comp }}"
-                                    {% if comp in competitors_selected %}checked{% endif %}>
-                                {{ comp }}
-                            </label>
-                        </li>
-                        {% endfor %}
-                    </ul>
-
-                    <button type="submit" class="button small" style="margin-top:10px;">Opslaan</button>
-                </form>
-
-            </div>
-        </section>
-
-
-        <!-- ALERTS SECTION -->
-        <section class="card soft-shadow fade-in">
-            <div class="card-header">
-                <h2 class="card-title">Recente Meldingen</h2>
-                <div class="card-meta">Strategische updates op basis van jouw selectie</div>
-            </div>
-
-            <div class="card-body">
-
-                {% if alerts %}
-                    <ul class="soft-list">
-                        {% for a in alerts %}
-                        <li style="margin-bottom: 12px;">
-                            <strong>{{ a.type }}</strong> —
-                            <a href="{{ url_for('main.company_detail', company_id=a['company_id']) }}">
-                                {{ a.description }}
-                            </a>
-                            <br>
-                            <span class="badge-soft">{{ a.time.strftime('%Y-%m-%d') }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-
-                    {% if more_alerts_count > 0 %}
-                    <div style="margin-top:10px;">
-                        <a href="{{ url_for('main.all_alerts') }}" class="button small">
-                            Meer meldingen ({{ more_alerts_count }})
-                        </a>
-                    </div>
-                    {% endif %}
-
-                {% else %}
-                    <div class="empty-state">
-                        <h3>Geen recente meldingen</h3>
-                        <p class="subtitle">
-                            Nieuwe strategische signalen verschijnen automatisch in dit overzicht.
-                        </p>
-                    </div>
-                {% endif %}
-
-            </div>
-        </section>
-
-    </main>
-</div>
-</body>
-</html>
 
 
 

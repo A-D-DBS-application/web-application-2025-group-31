@@ -1,140 +1,74 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <title>Nieuwe Analyse | Rival</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% extends "base.html" %}
+{% block title %}Nieuwe Analyse | Rival{% endblock %}
 
-    <style>
-        /* -------------------------------------- */
-        /* LOADING SPINNER (RIVAL STYLE)          */
-        /* -------------------------------------- */
-        .spinner-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(3px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s ease;
-        }
+{% block content %}
 
-        .spinner-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #ddd;
-            border-top-color: var(--accent, #4c84ff);
-            border-radius: 50%;
-            animation: spin 0.9s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="layout">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar soft-shadow">
-        <div>
-            <h2>RIVAL</h2>
-            <div class="sidebar-tagline">Competitive intelligence</div>
-        </div>
-
-        <nav>
-            <a href="{{ url_for('main.dashboard') }}"><span class="label"><span class="dot"></span><span>Dashboard</span></span></a>
-            <a href="{{ url_for('main.scrape') }}" class="active"><span class="label"><span class="dot"></span><span>Nieuwe analyse</span></span></a>
-            <a href="{{ url_for('main.companies') }}"><span class="label"><span class="dot"></span><span>Bedrijven</span></span></a>
-            <a href="{{ url_for('main.watchlist') }}"><span class="label"><span class="dot"></span><span>Watchlist</span></span></a>
-            <a href="{{ url_for('main.logout') }}"><span class="label"><span class="dot"></span><span>Uitloggen</span></span></a>
-        </nav>
-    </aside>
-
-
-    <!-- MAIN CONTENT -->
-    <main class="content fade-in">
-
-        <div class="topbar">
-            <h1>Nieuwe Webanalyse</h1>
-            <p class="subtitle">Plak hieronder een website URL, kies optioneel een sector. Rival analyseert automatisch.</p>
-        </div>
-
-        {% if result and result.error %}
-            <p class="alert">❌ {{ result.error }}</p>
-        {% endif %}
-
-        <section class="card soft-shadow">
-            <div class="card-header">
-                <h2 class="card-title">Analyse starten</h2>
-                <div class="card-meta">Scraping + AI baseline wordt automatisch opgeslagen.</div>
-            </div>
-
-            <div class="card-body">
-                <form method="POST" class="auth-form" id="scrapeForm">
-
-                    <label>Website URL</label>
-                    <input 
-                        type="text" 
-                        name="url" 
-                        placeholder="https://voorbeeld.nl" 
-                        required
-                        value="{{ request.args.get('url', '') }}"
-                    >
-
-                    <label style="margin-top: 12px;">Sector (optioneel)</label>
-                    <select name="sector_id">
-                        <option value="">-- kies een sector --</option>
-                        {% for s in sectors %}
-                            <option value="{{ s.sector_id }}">{{ s.name }}</option>
-                        {% endfor %}
-                    </select>
-
-                    <button class="button full" type="submit" style="margin-top: 14px;">
-                        Analyse uitvoeren
-                    </button>
-                </form>
-            </div>
-        </section>
-
-    </main>
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Nieuwe Webanalyse</h1>
+    <p class="subtitle">Plak hieronder een website URL, kies optioneel een sector. Rival analyseert automatisch.</p>
+  </div>
 </div>
+
+{% if result and result.error %}
+  <p class="alert">❌ {{ result.error }}</p>
+{% endif %}
+
+<section class="card soft-shadow">
+  <div class="card-header">
+    <h2 class="card-title">Analyse starten</h2>
+    <div class="card-meta">Scraping + AI baseline wordt automatisch opgeslagen.</div>
+  </div>
+
+  <div class="card-body">
+    <form method="POST" class="auth-form" id="scrapeForm">
+
+      <label>Website URL</label>
+      <input
+        type="text"
+        name="url"
+        placeholder="https://voorbeeld.nl"
+        required
+        value="{{ request.args.get('url', '') }}"
+      >
+
+      <label class="mt-10">Sector (optioneel)</label>
+      <select name="sector_id" class="form-control">
+        <option value="">-- kies een sector --</option>
+        {% for s in sectors %}
+          <option value="{{ s.sector_id }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+
+      <button class="button full mt-14" type="submit">
+        Analyse uitvoeren
+      </button>
+    </form>
+  </div>
+</section>
 
 <!-- LOADER -->
 <div id="loadingSpinner" class="spinner-overlay">
-    <div class="spinner"></div>
+  <div class="spinner"></div>
 </div>
 
-<!-- SCRIPT: spinner tonen bij submit -->
+{% endblock %}
+
+{% block scripts %}
 <script>
-document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener("DOMContentLoaded", function() {
     const form = document.getElementById("scrapeForm");
     const spinner = document.getElementById("loadingSpinner");
 
     if (form && spinner) {
-        form.addEventListener("submit", function() {
-            spinner.classList.add("active");
-        });
+      form.addEventListener("submit", function() {
+        spinner.classList.add("active");
+      });
     }
-});
+  });
 </script>
+{% endblock %}
 
-</body>
-</html>
 
 
 

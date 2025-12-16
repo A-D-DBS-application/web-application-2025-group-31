@@ -1,160 +1,148 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <title>Bedrijvenbeheer | Rival</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-<div class="layout">
-    <aside class="sidebar soft-shadow">
-        <div>
-            <h2>RIVAL</h2>
-            <div class="sidebar-tagline">Competitive intelligence</div>
-        </div>
-        <nav>
-            <a href="{{ url_for('main.dashboard') }}">
-                <span class="label"><span class="dot"></span><span>Dashboard</span></span>
-            </a>
-            <a href="{{ url_for('main.watchlist') }}">
-                <span class="label"><span class="dot"></span><span>Watchlist</span></span>
-            </a>
-            <a href="{{ url_for('main.companies') }}" class="active">
-                <span class="label"><span class="dot"></span><span>Bedrijven</span></span>
-            </a>
-            <a href="{{ url_for('main.logout') }}">
-                <span class="label"><span class="dot"></span><span>Uitloggen</span></span>
-            </a>
-        </nav>
-        <div class="sidebar-footer">Supabase · company table live</div>
-    </aside>
+{% extends "base.html" %}
+{% block title %}Bedrijvenbeheer | Rival{% endblock %}
 
-    <main class="content fade-in">
+{% block content %}
 
-        <div class="topbar">
-            <div class="topbar-left">
-                <h1>Bedrijvenbeheer</h1>
-                <p class="subtitle">Beheer je bedrijven en filter op sector.</p>
-            </div>
-        </div>
-
-        {% if message %}
-            <p class="alert success">{{ message }}</p>
-        {% endif %}
-        
-        <!-- SECTOR FILTER -->
-        <div style="margin-bottom: 20px;">
-            <form method="GET" action="{{ url_for('main.companies') }}" style="display:inline-block;">
-                <label for="sector_filter">Filter op Sector:</label>
-                <select name="sector_id" id="sector_filter" onchange="this.form.submit()" class="input-field">
-                    <option value="">-- Alle Sectoren --</option> 
-                    
-                    {% for sector in sectors %}
-                        <option value="{{ sector.sector_id }}" 
-                                {% if selected_sector_id == sector.sector_id %}selected{% endif %}>
-                            {{ sector.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </form>
-        </div>
-
-        <!-- BESTAANDE BEDRIJVEN -->
-        <section class="card card-muted soft-shadow fade-in">
-            <div class="card-header">
-                <h2 class="card-title">Bestaande bedrijven</h2>
-            </div>
-            <div class="card-body">
-
-                {% if companies %}
-                    <div style="overflow-x:auto;">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Naam</th>
-                                    <th>Sector</th>
-                                    <th>Website</th>
-                                    <th>Hoofdkantoor</th>
-                                    <th>Team</th>
-                                    <th>Funding</th>
-                                    <th>Acties</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {% for c in companies %}
-                                    <tr>
-                                        <td>{{ c.name }}</td>
-                                        
-                                        <td>
-                                            {% if c.sector %}
-                                                {{ c.sector.name }}
-                                            {% else %}
-                                                <span class="tag tag-unknown">–</span>
-                                            {% endif %}
-                                        </td>
-                                        
-                                        <td>
-                                            {% if c.website_url %}
-                                                <a href="{{ c.website_url }}" target="_blank">{{ c.website_url }}</a>
-                                            {% else %}
-                                                <span class="tag">Geen</span>
-                                            {% endif %}
-                                        </td>
-
-                                        <td>{{ c.headquarters or 'Onbekend' }}</td>
-                                        <td>{{ c.team_size or '–' }}</td>
-
-                                        <td>
-                                            {% if c.funding %}
-                                                €{{ c.funding }}
-                                            {% else %}
-                                                –
-                                            {% endif %}
-                                        </td>
-
-
-                                        <td style="white-space:nowrap;">
-
-                                            <!-- Naar watchlist -->
-                                            <form method="POST" style="display:inline;">
-                                                <input type="hidden" name="form_type" value="add_to_watchlist">
-                                                <input type="hidden" name="company_id" value="{{ c.company_id }}">
-                                                <button class="button" style="padding:4px 8px; font-size:12px;">Watchlist</button>
-                                            </form>
-
-                                            <!-- Naar baseline / detail -->
-                                            <a
-                                                href="{{ url_for('main.company_detail', company_id=c.company_id) }}"
-                                                class="button"
-                                                style="padding:4px 8px; font-size:12px; background:#444; margin-left:4px;">
-                                                Baseline
-                                            </a>
-                                            
-                                            <!-- Delete -->
-                                            <form action="{{ url_for('main.delete_company', company_id=c.company_id) }}"
-                                                method="POST" style="display:inline;">
-                                                <button class="button"
-                                                        style="padding:4px 8px; font-size:12px; margin-left:4px; background:#b50000;">
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-
-                        </table>
-                    </div>
-
-                {% else %}
-                    <p class="subtitle">Geen bedrijven gevonden.</p>
-                {% endif %}
-
-            </div>
-        </section>
-
-    </main>
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Bedrijvenbeheer</h1>
+    <p class="subtitle">Beheer je bedrijven en filter op sector.</p>
+  </div>
 </div>
-</body>
-</html>
+
+{% if message %}
+  <p class="alert success">{{ message }}</p>
+{% endif %}
+
+<!-- SECTOR FILTER -->
+<div class="mb-20">
+  <form method="GET" action="{{ url_for('main.companies') }}" class="filter-row">
+    <label for="sector_filter" class="form-label">Filter op sector</label>
+
+    <select
+      name="sector_id"
+      id="sector_filter"
+      onchange="this.form.submit()"
+      class="form-control"
+    >
+      <option value="">-- Alle Sectoren --</option>
+
+      {% for sector in sectors %}
+        <option
+          value="{{ sector.sector_id }}"
+          {% if selected_sector_id == sector.sector_id %}selected{% endif %}
+        >
+          {{ sector.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+<!-- BESTAANDE BEDRIJVEN -->
+<section class="card card-muted soft-shadow fade-in">
+  <div class="card-header">
+    <h2 class="card-title">Bestaande bedrijven</h2>
+  </div>
+
+  <div class="card-body">
+    {% if companies %}
+      <div class="table-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Naam</th>
+              <th>Sector</th>
+              <th>Website</th>
+              <th>Hoofdkantoor</th>
+              <th>Team</th>
+              <th>Funding</th>
+              <th>Acties</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for c in companies %}
+              <tr>
+                <td>{{ c.name }}</td>
+
+                <td>
+                  {% if c.sector %}
+                    {{ c.sector.name }}
+                  {% else %}
+                    <span class="tag tag-unknown">–</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if c.website_url %}
+                    <a
+                      href="{{ c.website_url }}"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ c.website_url }}
+                    </a>
+                  {% else %}
+                    <span class="tag">Geen</span>
+                  {% endif %}
+                </td>
+
+                <td>{{ c.headquarters or 'Onbekend' }}</td>
+                <td>{{ c.team_size or '–' }}</td>
+
+                <td>
+                  {% if c.funding %}
+                    €{{ c.funding }}
+                  {% else %}
+                    –
+                  {% endif %}
+                </td>
+
+                <!-- ACTIES -->
+                <td class="actions-cell">
+
+                  <!-- Watchlist -->
+                  <form method="POST" class="inline-form">
+                    <input type="hidden" name="form_type" value="add_to_watchlist">
+                    <input type="hidden" name="company_id" value="{{ c.company_id }}">
+                    <button type="submit" class="button small action-btn">
+                      Watchlist
+                    </button>
+                  </form>
+
+                  <!-- Baseline -->
+                  <a
+                    href="{{ url_for('main.company_detail', company_id=c.company_id) }}"
+                    class="button small action-btn"
+                  >
+                    Baseline
+                  </a>
+
+                  <!-- Delete -->
+                  <form
+                    action="{{ url_for('main.delete_company', company_id=c.company_id) }}"
+                    method="POST"
+                    class="inline-form"
+                  >
+                    <button type="submit" class="button small action-btn">
+                      Delete
+                    </button>
+                  </form>
+
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
+    {% else %}
+      <p class="subtitle">Geen bedrijven gevonden.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}
+
+
