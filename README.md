@@ -35,7 +35,4 @@ Gebruikers kunnen:
 
 ---
 
-## 🧱 Projectstructuur
 
-## pip install reportlab python-pptx
-##pip install Flask-APScheduler
