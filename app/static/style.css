@@ -256,6 +256,18 @@ a { color: inherit; text-decoration: none; }
     0 0 35px rgba(56, 189, 248, 0.16);
 }
 
+/* ✅ Dashboard button alignment fix:
+   Add class "dashboard-card" to the 3 dashboard cards.
+   This keeps the change scoped and won't affect tables, lists, etc. */
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-card .button {
+  margin-top: auto;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -716,4 +728,5 @@ select:focus,
   scrollbar-width: thin;
   scrollbar-color: rgba(148,163,184,0.25) rgba(15,23,42,0.4);
 }
+
 
