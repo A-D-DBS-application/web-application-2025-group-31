@@ -167,6 +167,38 @@
   </div>
 </section>
 
+<!-- ✅ SIMILARITY BLOCK (BOVEN HISTORISCHE TRENDS) -->
+<section class="card soft-shadow fade-in mt-20">
+  <div class="card-header">
+    <h2 class="card-title">Vergelijkbare bedrijven</h2>
+    <div class="card-meta">Top 5 op basis van baseline report velden</div>
+  </div>
+
+  <div class="card-body">
+    {% if similar and similar|length > 0 %}
+      <ul class="soft-list">
+        {% for other, score in similar %}
+          <li class="list-item-12">
+            <strong>{{ other.name }}</strong>
+
+            <span class="badge-soft" style="margin-left: 10px;">
+              Similarity: {{ score|round(2) }}%
+            </span>
+
+            <div class="card-meta mt-10">
+              <a href="{{ url_for('main.company_detail', company_id=other.company_id) }}">
+                Bekijk baseline →
+              </a>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="subtitle">Nog onvoldoende bedrijven om een vergelijking te maken.</p>
+    {% endif %}
+  </div>
+</section>
+
 <section class="card soft-shadow fade-in mt-20">
   <div class="card-header">
     <h2 class="card-title">Historische trends</h2>
@@ -271,4 +303,5 @@
   buildLineChart('reviewChart', reviewLabels, reviewValues, 'Aantal reviews');
 </script>
 {% endblock %}
+
 

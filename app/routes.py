@@ -7,7 +7,7 @@ import csv
 import io
 from app.scraper import scrape_website
 from datetime import datetime
-
+from app.similarity import top_similar_companies
 bp = Blueprint('main', __name__)
 
 METRIC_OPTIONS = ["Pricing", "Features", "Reviews", "Funding", "Hiring"]
@@ -712,16 +712,23 @@ def company_detail(company_id):
     hiring_labels, hiring_values = history_series("Hiring")
     review_labels, review_values = history_series("Reviews")
 
+    # --------- SIMILAR COMPANIES (MVP) ---------
+    all_companies = Company.query.all()
+    similar = top_similar_companies(company, all_companies, top_n=5)
+
     return render_template(
         'company_detail.html',
         company=company,
         events=events,
+
         pricing_labels=pricing_labels,
         pricing_values=pricing_values,
         hiring_labels=hiring_labels,
         hiring_values=hiring_values,
         review_labels=review_labels,
         review_values=review_values,
+
+        similar=similar,  # <-- nieuw
     )
 
 
