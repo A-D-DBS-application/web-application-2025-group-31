@@ -35,4 +35,9 @@ Gebruikers kunnen:
 
 ---
 
+## Feedback Session
+Audio recording of the feedback sessions with our project partner:
+feedback session 1: https://drive.google.com/file/d/1HSkTbfF5iNlQhHZGLmBCUQD71RoKzIZs/view?usp=sharing
+feedback session 2:
+feedback session 3:
 
