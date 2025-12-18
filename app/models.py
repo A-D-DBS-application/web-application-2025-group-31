@@ -66,6 +66,7 @@ class AppUser(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     digest_frequency = db.Column(db.Text, default="weekly")
     digest_signals = db.Column(db.JSON, default=list)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self):
         return f"<AppUser {self.username}>"

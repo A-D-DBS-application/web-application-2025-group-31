@@ -9,6 +9,8 @@ from app.scraper import scrape_website
 from datetime import datetime
 from app.similarity import top_similar_companies
 from app.auth import login_required
+from app.auth import admin_required
+
 bp = Blueprint('main', __name__)
 
 METRIC_OPTIONS = ["Pricing", "Features", "Reviews", "Funding", "Hiring"]
@@ -559,7 +561,6 @@ def logout():
     session.clear()
     return redirect(url_for('main.login'))
 
-
 # =====================================================
 # DASHBOARD
 # =====================================================
@@ -608,58 +609,62 @@ def dashboard():
 
     all_companies = Company.query.all()
 
-   # ----------------------------------------
+    # ----------------------------------------
     # ALLE DETECTEERDE COMPETITORS UIT DATABASE
     # ----------------------------------------
     all_detected_competitors = set()
-    
+
     for comp in all_companies:
-        # Check if comp.competitors is not None (database jsonb can be null)
         if comp.competitors:
             for c in comp.competitors:
-                
                 competitor_name = ""
 
-                # CASE 1: The competitor is stored as a Dictionary (JSON Object)
                 if isinstance(c, dict):
-                    # Try to get 'name'. If 'name' doesn't exist, try 'company_name', else empty string.
                     competitor_name = c.get('name') or c.get('company_name') or ""
-                    
-                    # DEBUG: If name is still empty, print the dict to see what keys to use
                     if not competitor_name:
                         print(f"DEBUG: Found a competitor dict without a 'name': {c}")
 
-                # CASE 2: The competitor is just a simple String
                 elif isinstance(c, str):
                     competitor_name = c
 
-                # Add to set only if we found a valid name
                 if competitor_name and competitor_name.strip() != "":
                     all_detected_competitors.add(competitor_name)
 
     all_detected_competitors = sorted(all_detected_competitors)
 
     # ----------------------------------------
-    # FILTER ALERTS OP BASIS VAN GESELECTEERDE COMPETITORS
+    # ALERTS = CHANGEEVENTS VAN GEMONITORDE COMPANIES (WATCHLIST)
     # ----------------------------------------
-    if competitors_selected:
-        recent_events_raw = ChangeEvent.query.filter(
-            ChangeEvent.description.ilike(
-                '%' + '%'.join(competitors_selected) + '%'
-            )
-        ).order_by(ChangeEvent.detected_at.desc()).limit(3).all()
+    if watchlist_ids:
+        recent_events_raw = (
+            ChangeEvent.query
+            .filter(ChangeEvent.company_id.in_(watchlist_ids))
+            .order_by(ChangeEvent.detected_at.desc())
+            .limit(3)
+            .all()
+        )
     else:
-        recent_events_raw = ChangeEvent.query.order_by(
-            ChangeEvent.detected_at.desc()
-        ).limit(3).all()
+        recent_events_raw = (
+            ChangeEvent.query
+            .order_by(ChangeEvent.detected_at.desc())
+            .limit(3)
+            .all()
+        )
+
+    # ✅ N+1 FIX: companies in bulk ophalen
+    company_ids = {e.company_id for e in recent_events_raw}
+    companies_bulk = (
+        Company.query.filter(Company.company_id.in_(company_ids)).all()
+        if company_ids else []
+    )
+    company_name_by_id = {c.company_id: c.name for c in companies_bulk}
 
     alerts = []
     for e in recent_events_raw:
-        company = Company.query.get(e.company_id)
         alerts.append({
             "id": e.event_id,
             "company_id": e.company_id,
-            "company": company.name if company else "Onbekend bedrijf",
+            "company": company_name_by_id.get(e.company_id, "Onbekend bedrijf"),
             "type": e.event_type,
             "description": e.description,
             "time": e.detected_at
@@ -678,7 +683,6 @@ def dashboard():
         companies=all_companies,
         more_alerts_count=max(0, ChangeEvent.query.count() - 3)
     )
-
 
 # =====================================================
 # COMPANY DETAIL
@@ -854,13 +858,17 @@ def export_watchlist_audit():
         .all()
     )
 
+    # ✅ N+1 FIX: company names in bulk ophalen
+    company_ids = {log.company_id for log in logs}
+    companies_bulk = Company.query.filter(Company.company_id.in_(company_ids)).all() if company_ids else []
+    company_name_by_id = {c.company_id: c.name for c in companies_bulk}
+
     # JSON export
     if fmt == "json":
         out = []
         for log in logs:
-            company = Company.query.get(log.company_id)
             out.append({
-                "company": company.name if company else "Onbekend",
+                "company": company_name_by_id.get(log.company_id, "Onbekend"),
                 "source_name": log.source_name,
                 "source_url": log.source_url,
                 "retrieved_at": log.retrieved_at.isoformat() if log.retrieved_at else None
@@ -873,12 +881,11 @@ def export_watchlist_audit():
     writer.writerow(["Company", "Source Name", "Source URL", "Retrieved At"])
 
     for log in logs:
-        company = Company.query.get(log.company_id)
         writer.writerow([
-            company.name if company else "Onbekend",
+            company_name_by_id.get(log.company_id, "Onbekend"),
             log.source_name,
             log.source_url,
-            log.retrieved_at
+            log.retrieved_at.isoformat() if log.retrieved_at else ""
         ])
 
     return Response(
@@ -886,6 +893,7 @@ def export_watchlist_audit():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=audit_export.csv"}
     )
+
 
 
 # =====================================================
@@ -1313,15 +1321,19 @@ def scrape():
 # =====================================================
 
 @bp.route('/audit-logs')
-@login_required
+@admin_required
 def audit_logs():
     logs = AuditLog.query.order_by(AuditLog.retrieved_at.desc()).all()
 
+    # ✅ N+1 FIX: company names in bulk ophalen
+    company_ids = {log.company_id for log in logs}
+    companies_bulk = Company.query.filter(Company.company_id.in_(company_ids)).all() if company_ids else []
+    company_name_by_id = {c.company_id: c.name for c in companies_bulk}
+
     enriched_logs = []
     for log in logs:
-        company = Company.query.get(log.company_id)
         enriched_logs.append({
-            "company": company.name if company else "Onbekend",
+            "company": company_name_by_id.get(log.company_id, "Onbekend"),
             "company_id": log.company_id,
             "source_name": log.source_name,
             "source_url": log.source_url,
@@ -1332,19 +1344,23 @@ def audit_logs():
 
 
 @bp.route('/audit-logs/export')
-@login_required
+@admin_required
 def export_all_audit_logs():
     fmt = request.args.get("format", "csv").lower()
 
     logs = AuditLog.query.order_by(AuditLog.retrieved_at.desc()).all()
 
+    # ✅ N+1 FIX: company names in bulk ophalen
+    company_ids = {log.company_id for log in logs}
+    companies_bulk = Company.query.filter(Company.company_id.in_(company_ids)).all() if company_ids else []
+    company_name_by_id = {c.company_id: c.name for c in companies_bulk}
+
     # JSON export
     if fmt == "json":
         out = []
         for log in logs:
-            company = Company.query.get(log.company_id)
             out.append({
-                "company": company.name if company else "Onbekend",
+                "company": company_name_by_id.get(log.company_id, "Onbekend"),
                 "source_name": log.source_name,
                 "source_url": log.source_url,
                 "retrieved_at": log.retrieved_at.isoformat() if log.retrieved_at else None
@@ -1357,12 +1373,11 @@ def export_all_audit_logs():
     writer.writerow(["Company", "Source Name", "Source URL", "Retrieved At"])
 
     for log in logs:
-        company = Company.query.get(log.company_id)
         writer.writerow([
-            company.name if company else "Onbekend",
+            company_name_by_id.get(log.company_id, "Onbekend"),
             log.source_name,
             log.source_url,
-            log.retrieved_at
+            log.retrieved_at.isoformat() if log.retrieved_at else ""
         ])
 
     return Response(
@@ -1370,7 +1385,6 @@ def export_all_audit_logs():
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment; filename=all_audit_logs.csv"}
     )
-
 
 # =====================================================
 # WEEKLY MAIL SETTINGS
@@ -1400,17 +1414,20 @@ def update_weekly_mail():
 @bp.route("/all-alerts")
 @login_required
 def all_alerts():
-    # Haal ALLE events op (niet limiteren!)
     events = ChangeEvent.query.order_by(
         ChangeEvent.detected_at.desc()
     ).all()
 
+    # ✅ N+1 FIX: company names in bulk ophalen
+    company_ids = {e.company_id for e in events}
+    companies_bulk = Company.query.filter(Company.company_id.in_(company_ids)).all() if company_ids else []
+    company_name_by_id = {c.company_id: c.name for c in companies_bulk}
+
     alerts = []
     for e in events:
-        company = Company.query.get(e.company_id)
         alerts.append({
             "company_id": e.company_id,
-            "company": company.name if company else "Onbekend bedrijf",
+            "company": company_name_by_id.get(e.company_id, "Onbekend bedrijf"),
             "type": e.event_type,
             "description": e.description,
             "time": e.detected_at
@@ -1419,7 +1436,7 @@ def all_alerts():
     return render_template(
         "all_alerts.html",
         alerts=alerts,
-        company=None   # algemene historiek, niet per bedrijf
+        company=None
     )
 
 # =====================================================
@@ -1427,7 +1444,7 @@ def all_alerts():
 # =====================================================
 
 @bp.route("/api/events")
-@login_required
+@admin_required
 def api_events():
     """
     JSON feed van alle gedetecteerde events:
@@ -1440,13 +1457,12 @@ def api_events():
       ?since=2025-12-01
     """
 
-    if "user_id" not in session:
-        return jsonify({"error": "Unauthorized"}), 401
+    # ✅ N+1 FIX: query levert meteen Company.name mee
+    query = (
+        db.session.query(ChangeEvent, Company.name)
+        .join(Company, ChangeEvent.company_id == Company.company_id)
+    )
 
-    # Basis query
-    query = ChangeEvent.query.join(Company, ChangeEvent.company_id == Company.company_id)
-
-    # --- Filters (optioneel) ---
     company_id = request.args.get("company_id", type=int)
     if company_id:
         query = query.filter(ChangeEvent.company_id == company_id)
@@ -1455,32 +1471,29 @@ def api_events():
     if event_type:
         query = query.filter(ChangeEvent.event_type == event_type)
 
-    since_str = request.args.get("since")  # verwacht vorm 'YYYY-MM-DD'
+    since_str = request.args.get("since")
     if since_str:
         try:
             since_date = datetime.fromisoformat(since_str)
             query = query.filter(ChangeEvent.detected_at >= since_date)
         except ValueError:
-            # Als de datum fout is, negeren we de filter gewoon
             pass
 
-    # Sorteer nieuw → oud
-    events = query.order_by(ChangeEvent.detected_at.desc()).all()
+    rows = query.order_by(ChangeEvent.detected_at.desc()).all()
 
-    # Bouw JSON payload
     out = []
-    for e in events:
-        company = Company.query.get(e.company_id)
+    for e, company_name in rows:
         out.append({
             "event_id": e.event_id,
             "company_id": e.company_id,
-            "company_name": company.name if company else "Onbekend",
+            "company_name": company_name or "Onbekend",
             "event_type": e.event_type,
             "description": e.description,
             "detected_at": e.detected_at.isoformat() if e.detected_at else None
         })
 
     return jsonify(out)
+
 # =====================================================
 # DELETE COMPANY 
 # =====================================================
