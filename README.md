@@ -52,8 +52,112 @@ Audio recordings of the feedback sessions with our project partner:
 - **Feedback session 2:**  
   *(to be added)*
 - **Feedback session 3:**  
-  https://drive.google.com/file/d/1bfRbiPLT7Ammqkg0QMOAOPu0MHC_rU8_/view?usp=sharing 
+  *(to be added)*
 
 ---
 
 
+## User stories
+User Stories
+🔴 Must-Haves
+Baseline Generation
+  As an entrepreneur
+  I want to paste a company URL (my own or a competitor)
+  So that Rival auto-generates a baseline report instead of me spending hours on research
+
+Company Fundamentals
+As an entrepreneur
+  I want the baseline report to show HQ, office locations, team size, funding history, and traction signals
+  So that I instantly understand the company’s fundamentals
+
+Competitor Detection
+  As an entrepreneur
+  I want Rival to auto-detect and list direct competitors with a similar value proposition and target segment
+  So that I can quickly map the competitive landscape
+
+Strategic Signal Highlighting
+  As a product strategist
+  I want Rival to highlight signals like new features, changed pricing, or new product lines
+  So that I can anticipate strategic moves
+
+Market Entry Flagging
+  As an entrepreneur
+  I want Rival to flag market entry (competitor enters my geography or targets a new segment)
+  So that I can adjust my go-to-market before it’s too late
+
+Real-time Dashboard
+  As a strategy lead
+  I want a real-time dashboard aggregating competitor metrics (pricing, features, reviews, hiring trends)
+  So that I can brief leadership with structured facts instead of scattered data
+
+Metric Configuration
+  As a product manager
+  I want to configure which competitors and metrics to track
+  So that I only see what matters for my roadmap
+
+Due Diligence Profiles
+  As a VC analyst
+  I want quick one-click company profiles with structured data
+  So that I can prepare due diligence packs faster
+
+Weekly Digest
+  As a user
+  I want to opt-in to a weekly digest mail with the latest detected changes
+  So that Rival acts as my watchdog without me logging in daily
+
+Audit Logs
+  As a compliance/IT admin
+  I want exportable audit logs of data sources
+  So that I know Rival’s signals come from verifiable, compliant sources
+
+🟡 Should-Haves
+Side-by-Side Comparison
+  As a strategy team
+  I want to compare 2–3 companies side by side
+  So that I can quickly benchmark options
+
+Historical Trends
+  As a strategy team
+  I want to see historical trend graphs
+  So that I can detect medium-term patterns
+
+Custom Digest
+  As a strategy lead
+  I want to customize my weekly digest (competitors, frequency, signals)
+  So that the updates are relevant
+
+Export to PDF/Slides
+  As a VC associate
+  I want a polished PDF/slide export of the baseline report
+  So that I can drop findings into an investment memo
+
+Saved Watchlist
+  As a team
+  I want Rival to maintain a saved watchlist and refresh data weekly
+  So that I have a living portfolio of monitored targets
+
+🔵 Could-Haves
+Similarity Engine
+  As a user
+  I want Rival to suggest “similar companies” to ones I track
+  So that I can discover adjacent competitors
+
+API Enrichment
+  As a data analyst
+  I want an API feed of all tracked events
+  So that I can enrich our BI tools
+
+Push Alerts
+  As a founder
+  I want push alerts when a competitor makes a major move
+  So that I can react tactically in near real time
+
+Campaign Monitoring
+  As a marketing lead
+  I want to monitor competitor campaigns/promotions
+  So that I can adjust my messaging
+
+AI Insights
+  As a product strategist
+  I want AI-generated summaries of competitor movements
+  So that I can consume insights faster
