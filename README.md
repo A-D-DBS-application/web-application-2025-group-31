@@ -58,7 +58,6 @@ Audio recordings of the feedback sessions with our project partner:
 
 
 ## User stories
-User Stories
 
 🔴 Must-Haves
 Baseline Generation
