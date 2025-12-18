@@ -1502,7 +1502,7 @@ def api_events():
 
     return jsonify(out)
 # =====================================================
-# DELETE COMPANY (NIEUW)
+# DELETE COMPANY 
 # =====================================================
 
 @bp.route("/company/<int:company_id>/delete", methods=["POST"])
@@ -1527,7 +1527,7 @@ def delete_company(company_id):
     return redirect(url_for("main.companies"))
 
 # =====================================================
-# COMPANY ALERTS (NIEUW)
+# COMPANY ALERTS 
 # =====================================================
 
 @bp.route('/company/<int:company_id>/alerts')
