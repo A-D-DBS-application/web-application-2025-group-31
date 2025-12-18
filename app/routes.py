@@ -10,6 +10,7 @@ from datetime import datetime
 from app.similarity import top_similar_companies
 from app.auth import login_required
 from app.auth import admin_required
+from urllib.parse import urlparse, urlunparse
 
 bp = Blueprint('main', __name__)
 
@@ -335,6 +336,35 @@ def update_company_metrics(company):
     m_hiring.last_updated = datetime.utcnow()
     track_metric_history(company.company_id, "Hiring", hiring_code)
 
+def normalize_url(url: str) -> str:
+    if not url:
+        return ""
+    url = url.strip()
+
+    # Voeg scheme toe als user "example.com" plakt
+    if "://" not in url:
+        url = "https://" + url
+
+    p = urlparse(url)
+
+    scheme = (p.scheme or "https").lower()
+    netloc = (p.netloc or "").lower()
+
+    # verwijder default ports
+    if netloc.endswith(":80") and scheme == "http":
+        netloc = netloc[:-3]
+    if netloc.endswith(":443") and scheme == "https":
+        netloc = netloc[:-4]
+
+    path = p.path or ""
+    # trim trailing slash (behalve root)
+    if path != "/" and path.endswith("/"):
+        path = path[:-1]
+
+    # drop fragment, keep query (als je wil kun je query ook droppen)
+    normalized = urlunparse((scheme, netloc, path, "", p.query or "", ""))
+    return normalized
+
 
 # =====================================================
 # INDEX
@@ -408,8 +438,11 @@ def refresh_all_companies():
 
             try:
                 # --- SCRAPEN ---
-                result = scrape_website(company.website_url)
-                
+                normalized = normalize_url(company.website_url)
+                company.website_url = normalized
+                result = scrape_website(normalized)
+
+
                 if result.get("error"):
                     continue
 
@@ -1143,7 +1176,8 @@ def scrape():
         return render_template('scrape.html', result=None, sectors=sectors)
 
     # URL kan uit querystring (GET) of uit formulier (POST) komen
-    url = url_from_query or request.form.get('url')
+    raw_url = url_from_query or request.form.get('url')
+    url = normalize_url(raw_url)
 
     # DEBUG: toon request.form bij POST
     if request.method == 'POST':
