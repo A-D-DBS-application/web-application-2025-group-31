@@ -120,7 +120,16 @@
     {% if company.competitors %}
       <ul class="soft-list">
         {% for c in company.competitors %}
-          <li class="card-title">{{ c }}</li>
+          <li class="card-title">
+            {% if c is mapping %}
+              <strong>{{ c.name }}</strong>
+              {% if c.description %}
+                <div class="subtitle">{{ c.description }}</div>
+              {% endif %}
+            {% else %}
+              {{ c }}
+            {% endif %}
+          </li>
         {% endfor %}
       </ul>
     {% else %}
@@ -206,23 +215,38 @@
   </div>
 
   <div class="card-body">
-    {% if pricing_labels or hiring_labels or review_labels %}
+    {% if pricing_labels or hiring_labels or review_distribution_values %}
 
       <div class="trend-grid">
+
         <div>
-          <h3 class="card-subtitle card-title">Pricing evolution</h3>
+          <h3 class="card-title">Pricing evolution</h3>
+
+          {% if pricing_labels|length < 2 %}
+            <p class="subtitle">
+              Nog onvoldoende data om trends te tonen (min. 2 meetpunten).
+              We tonen voorlopig het huidige niveau.
+            </p>
+          {% endif %}
+
           <canvas id="priceChart"></canvas>
         </div>
 
         <div>
-          <h3 class="card-subtitle card-title">Hiring activity</h3>
+          <h3 class="card-title">Hiring activity</h3>
+
+          {% if hiring_labels|length < 2 %}
+            <p class="subtitle">Nog onvoldoende data om hiring-trends te tonen.</p>
+          {% endif %}
+
           <canvas id="hiringChart"></canvas>
         </div>
 
         <div class="trend-grid-full">
-          <h3 class="card-subtitle card-title">Review volume</h3>
+          <h3 class="card-title">Review verdeling</h3>
           <canvas id="reviewChart"></canvas>
         </div>
+
       </div>
 
     {% else %}
@@ -267,42 +291,175 @@
 
 {% block scripts %}
 <script>
+  // Data uit Flask
   const pricingLabels = {{ pricing_labels|tojson }};
   const pricingValues = {{ pricing_values|tojson }};
 
   const hiringLabels = {{ hiring_labels|tojson }};
   const hiringValues = {{ hiring_values|tojson }};
 
-  const reviewLabels = {{ review_labels|tojson }};
-  const reviewValues = {{ review_values|tojson }};
+  const reviewDistribution = {{ review_distribution_values|tojson }};
 
-  function buildLineChart(canvasId, labels, data, label) {
+  function destroyIfExists(canvas) {
+    if (canvas && canvas._chartInstance) {
+      canvas._chartInstance.destroy();
+      canvas._chartInstance = null;
+    }
+  }
+
+  // Pricing: tier chart (trapjes) + werkt ook met 1 datapunt
+  function buildPricingTierChart(canvasId, labels, data) {
     const canvas = document.getElementById(canvasId);
-    if (!canvas || !labels || labels.length === 0) return;
+    if (!canvas || typeof Chart === "undefined") return;
 
-    new Chart(canvas.getContext('2d'), {
+    destroyIfExists(canvas);
+
+    const tierLabels = {
+      0: 'Onbekend',
+      1: 'Gratis / Freemium',
+      2: 'Lage prijsklasse',
+      3: 'Midden segment',
+      4: 'Hoge prijsklasse',
+      5: 'Enterprise'
+    };
+
+    let L = Array.isArray(labels) ? labels.slice() : [];
+    let V = Array.isArray(data) ? data.slice() : [];
+
+    // min 2 punten zodat Chart.js altijd tekent
+    if (L.length === 1) {
+      L = [L[0], L[0]];
+      V = [V[0], V[0]];
+    }
+    if (L.length === 0) return;
+
+    const xLabels = L.map(d => String(d).slice(0, 10));
+    const yValues = V.map(v => (v === null || v === undefined) ? null : Number(v));
+
+    const chart = new Chart(canvas.getContext('2d'), {
       type: 'line',
       data: {
-        labels: labels,
+        labels: xLabels,
         datasets: [{
-          label: label,
-          data: data,
-          tension: 0.25,
-          fill: false
+          data: yValues,
+          stepped: true,
+          tension: 0,
+          fill: false,
+          spanGaps: true
         }]
       },
       options: {
         responsive: true,
-        scales: { y: { beginAtZero: false } }
+        maintainAspectRatio: true,
+        aspectRatio: 2.2,
+        scales: {
+          x: { ticks: { autoSkip: true, maxTicksLimit: 6, maxRotation: 0 } },
+          y: {
+            min: 0,
+            max: 5,
+            ticks: {
+              stepSize: 1,
+              callback: (value) => tierLabels[value] ?? value
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => tierLabels[ctx.parsed.y] ?? `Tier ${ctx.parsed.y}`
+            }
+          }
+        }
       }
     });
+
+    canvas._chartInstance = chart;
   }
 
-  buildLineChart('priceChart', pricingLabels, pricingValues, 'Pricing score');
-  buildLineChart('hiringChart', hiringLabels, hiringValues, 'Hiring activity');
-  buildLineChart('reviewChart', reviewLabels, reviewValues, 'Aantal reviews');
+  // Hiring: gewone line chart (blijft simpel) + werkt ook met 1 datapunt
+  function buildHiringChart(canvasId, labels, data, label) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || typeof Chart === "undefined") return;
+
+    destroyIfExists(canvas);
+
+    let L = Array.isArray(labels) ? labels.slice() : [];
+    let V = Array.isArray(data) ? data.slice() : [];
+
+    if (L.length === 1) {
+      L = [L[0], L[0]];
+      V = [V[0], V[0]];
+    }
+    if (L.length === 0) return;
+
+    const xLabels = L.map(d => String(d).slice(0, 10));
+
+    const chart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: xLabels,
+        datasets: [{
+          label: label,
+          data: V,
+          tension: 0.25,
+          fill: false,
+          spanGaps: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2.2,
+        scales: {
+          x: { ticks: { autoSkip: true, maxTicksLimit: 6, maxRotation: 0 } },
+          y: { beginAtZero: true }
+        },
+        plugins: { legend: { display: true } }
+      }
+    });
+
+    canvas._chartInstance = chart;
+  }
+
+  // Reviews: bar chart (5 staven)
+  function buildReviewBarChart() {
+    const canvas = document.getElementById('reviewChart');
+    if (!canvas || typeof Chart === "undefined") return;
+
+    destroyIfExists(canvas);
+
+    const chart = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['1★', '2★', '3★', '4★', '5★'],
+        datasets: [{
+          label: 'Aantal reviews',
+          data: Array.isArray(reviewDistribution) ? reviewDistribution : [0,0,0,0,0],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2.5,
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    canvas._chartInstance = chart;
+  }
+
+  // Render charts (ook als er maar 1 datapunt is)
+  buildPricingTierChart('priceChart', pricingLabels, pricingValues);
+  buildHiringChart('hiringChart', hiringLabels, hiringValues, 'Team size');
+  buildReviewBarChart();
 </script>
 {% endblock %}
+
 
 
 
