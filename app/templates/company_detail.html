@@ -14,9 +14,9 @@
   </div>
 </div>
 
-<a href="{{ url_for('main.companies') }}" class="button mb-14">← Terug naar bedrijven</a>
+<a href="{{ url_for('main.companies') }}" class="button mb-14 w-100 w-md-auto">← Terug naar bedrijven</a>
 
-<div class="export-row mb-20">
+<div class="export-row mb-20 d-flex flex-wrap gap-2">
   <a class="button small action-btn" href="{{ url_for('main.export_company', company_id=company.company_id, format='json') }}">Export JSON</a>
   <a class="button small action-btn" href="{{ url_for('main.export_company', company_id=company.company_id, format='csv') }}">Export CSV</a>
   <a class="button small action-btn" href="{{ url_for('main.export_company', company_id=company.company_id, format='txt') }}">VC Memo</a>
@@ -30,15 +30,15 @@
     <div class="card-meta">Website en identiteit</div>
   </div>
   <div class="card-body">
-    <p><strong>Website:</strong><br>
+    <p><strong class="card-title">Website:</strong><br>
       {% if company.website_url %}
-        <a href="{{ company.website_url }}" target="_blank" rel="noopener noreferrer">{{ company.website_url }}</a>
+        <a class="subtitle" href="{{ company.website_url }}" target="_blank" rel="noopener noreferrer">{{ company.website_url }}</a>
       {% else %}
         <span class="tag">Geen website</span>
       {% endif %}
     </p>
 
-    <p class="mt-15"><strong>Sector:</strong><br>
+    <p class="mt-15"><strong class="card-title">Sector:</strong><br>
       {% if company.sector %}
         <span class="tag tag-sector">{{ company.sector.name }}</span>
       {% else %}
@@ -54,7 +54,7 @@
     <div class="card-meta">Gegenereerd via scraping + AI</div>
   </div>
   <div class="card-body">
-    <p>{{ company.ai_summary or "Geen samenvatting beschikbaar" }}</p>
+    <p class="card-title">{{ company.ai_summary or "Geen samenvatting beschikbaar" }}</p>
   </div>
 </section>
 
@@ -63,7 +63,7 @@
     <h2 class="card-title">Value Proposition</h2>
   </div>
   <div class="card-body">
-    <p>{{ company.value_proposition or "Onbekend" }}</p>
+    <p class="card-title">{{ company.value_proposition or "Onbekend" }}</p>
   </div>
 </section>
 
@@ -72,7 +72,7 @@
     <h2 class="card-title">Productbeschrijving</h2>
   </div>
   <div class="card-body">
-    <p>{{ company.product_description or "Geen productinformatie beschikbaar" }}</p>
+    <p class="card-title">{{ company.product_description or "Geen productinformatie beschikbaar" }}</p>
   </div>
 </section>
 
@@ -81,7 +81,7 @@
     <h2 class="card-title">Doelgroep</h2>
   </div>
   <div class="card-body">
-    <p>{{ company.target_segment or "Onbekend segment" }}</p>
+    <p class="card-title">{{ company.target_segment or "Onbekend segment" }}</p>
   </div>
 </section>
 
@@ -90,7 +90,7 @@
     <h2 class="card-title">Pricing</h2>
   </div>
   <div class="card-body">
-    <p>{{ company.pricing or "Geen pricing gevonden" }}</p>
+    <p class="card-title">{{ company.pricing or "Geen pricing gevonden" }}</p>
   </div>
 </section>
 
@@ -102,7 +102,7 @@
     {% if company.key_features %}
       <ul class="soft-list">
         {% for f in company.key_features %}
-          <li>{{ f }}</li>
+          <li class="card-title">{{ f }}</li>
         {% endfor %}
       </ul>
     {% else %}
@@ -120,7 +120,7 @@
     {% if company.competitors %}
       <ul class="soft-list">
         {% for c in company.competitors %}
-          <li>{{ c }}</li>
+          <li class="card-title">{{ c }}</li>
         {% endfor %}
       </ul>
     {% else %}
@@ -135,15 +135,15 @@
     <div class="card-meta">Kernindicatoren gedetecteerd via AI</div>
   </div>
   <div class="card-body">
-    <p><strong>Headquarters:</strong><br>{{ company.headquarters or "Onbekend" }}</p>
+    <p class="subtitle"><strong class="card-title">Headquarters:</strong><br>{{ company.headquarters or "Onbekend" }}</p>
 
-    <p><strong>Office Locations:</strong><br>
+    <p class="subtitle"><strong class="card-title">Office Locations:</strong><br>
       {% if company.office_locations %}{{ company.office_locations }}{% else %}Niet beschikbaar{% endif %}
     </p>
 
-    <p><strong>Team Size:</strong><br>{{ company.team_size or "Onbekend" }}</p>
+    <p class="subtitle"><strong class="card-title">Team Size:</strong><br>{{ company.team_size or "Onbekend" }}</p>
 
-    <p><strong>Total Funding:</strong><br>
+    <p class="subtitle"><strong class="card-title">Total Funding:</strong><br>
       {% if company.funding %}
         {{ company.funding }}
       {% elif company.funding_history %}
@@ -153,7 +153,7 @@
       {% endif %}
     </p>
 
-    <p><strong>Funding History:</strong><br>{{ company.funding_history or "Geen gegevens" }}</p>
+    <p class="subtitle"><strong class="card-title">Funding History:</strong><br>{{ company.funding_history or "Geen gegevens" }}</p>
   </div>
 </section>
 
@@ -163,7 +163,7 @@
     <div class="card-meta">Gedetecteerde groei / activiteit</div>
   </div>
   <div class="card-body">
-    <p>{{ company.traction_signals or "Geen signalen" }}</p>
+    <p class="card-title">{{ company.traction_signals or "Geen signalen" }}</p>
   </div>
 </section>
 
@@ -179,14 +179,14 @@
       <ul class="soft-list">
         {% for other, score in similar %}
           <li class="list-item-12">
-            <strong>{{ other.name }}</strong>
+            <strong class="card-title">{{ other.name }}</strong>
 
             <span class="badge-soft" style="margin-left: 10px;">
               Similarity: {{ score|round(2) }}%
             </span>
 
             <div class="card-meta mt-10">
-              <a href="{{ url_for('main.company_detail', company_id=other.company_id) }}">
+              <a class="subtitle" href="{{ url_for('main.company_detail', company_id=other.company_id) }}">
                 Bekijk baseline →
               </a>
             </div>
@@ -210,17 +210,17 @@
 
       <div class="trend-grid">
         <div>
-          <h3 class="card-subtitle">Pricing evolution</h3>
+          <h3 class="card-subtitle card-title">Pricing evolution</h3>
           <canvas id="priceChart"></canvas>
         </div>
 
         <div>
-          <h3 class="card-subtitle">Hiring activity</h3>
+          <h3 class="card-subtitle card-title">Hiring activity</h3>
           <canvas id="hiringChart"></canvas>
         </div>
 
         <div class="trend-grid-full">
-          <h3 class="card-subtitle">Review volume</h3>
+          <h3 class="card-subtitle card-title">Review volume</h3>
           <canvas id="reviewChart"></canvas>
         </div>
       </div>
@@ -244,8 +244,8 @@
       <ul class="soft-list">
         {% for e in events[:3] %}
           <li class="list-item-8">
-            <strong>{{ e.event_type }}</strong><br>
-            {{ e.description }}<br>
+            <strong class="card-title">{{ e.event_type }}</strong><br>
+            <span class="card-title">{{ e.description }}</span><br>
             <span class="badge-soft">{{ e.detected_at.strftime('%Y-%m-%d') }}</span>
           </li>
         {% endfor %}
@@ -253,7 +253,7 @@
 
       {% if events|length > 3 %}
         <a href="{{ url_for('main.company_alerts', company_id=company.company_id) }}"
-           class="button mt-10">
+           class="button mt-10 w-100 w-md-auto">
           Bekijk alle wijzigingen →
         </a>
       {% endif %}
@@ -303,5 +303,6 @@
   buildLineChart('reviewChart', reviewLabels, reviewValues, 'Aantal reviews');
 </script>
 {% endblock %}
+
 
 

@@ -17,7 +17,7 @@
   </div>
 
   <div class="card-body">
-    <div class="actions-row">
+    <div class="actions-row d-flex flex-wrap gap-2">
       <a class="button small action-btn" href="{{ url_for('main.export_all_audit_logs', format='csv') }}">Export CSV</a>
       <a class="button small action-btn" href="{{ url_for('main.export_all_audit_logs', format='json') }}">Export JSON</a>
     </div>
@@ -25,15 +25,20 @@
     {% if logs %}
       <ul class="soft-list">
         {% for log in logs %}
-          <li class="list-item-14">
-            <strong>{{ log.company }}</strong><br>
-            Bron: {{ log.source_name }}
-            {% if log.source_url %}
-              — <a href="{{ log.source_url }}" target="_blank" rel="noopener noreferrer">↗</a>
-            {% endif %}
+          <li class="list-item-14 subtitle">
+            <strong class="card-title">{{ log.company }}</strong><br>
+
+            <span class="subtitle">
+              Bron: {{ log.source_name }}
+              {% if log.source_url %}
+                — <a class="subtitle" href="{{ log.source_url }}" target="_blank" rel="noopener noreferrer">↗</a>
+              {% endif %}
+            </span>
+
             <br>
             <span class="badge-soft">{{ log.retrieved_at.strftime('%Y-%m-%d %H:%M') }}</span>
           </li>
+
         {% endfor %}
       </ul>
     {% else %}
@@ -43,4 +48,5 @@
 </section>
 
 {% endblock %}
+
 

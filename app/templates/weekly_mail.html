@@ -3,7 +3,7 @@
 
 {% block content %}
 
-<div class="topbar">
+<div class="topbar d-flex flex-wrap gap-2">
   <div class="topbar-left">
     <h1>Digest Instellingen</h1>
     <div class="subtitle">Beheer uw wekelijkse e-mailnotificaties en inhoud</div>
@@ -26,7 +26,7 @@
       <div class="form-group">
         <label for="frequency" class="form-label">Frequentie</label>
 
-        <select id="frequency" name="frequency" class="form-control">
+        <select id="frequency" name="frequency" class="form-control w-100 w-md-auto">
           <option value="" {% if not user.digest_frequency or user.digest_frequency == '' %}selected{% endif %}>
             Digest uitschakelen (Geen mails)
           </option>
@@ -68,7 +68,7 @@
         <small class="form-help">Selecteer welke strategische veranderingen u wilt zien in de digest.</small>
       </div>
 
-      <button type="submit" class="button mt-20">
+      <button type="submit" class="button mt-20 w-100 w-md-auto">
         Instellingen Opslaan
       </button>
 
@@ -76,48 +76,44 @@
   </div>
 </div>
 
-<div class="card card-muted mt-20">
-  <div class="card-header">
-    <h2 class="card-title">Voorbeeld van wekelijkse mail</h2>
-    <div class="card-meta">Dit is een preview van wat Rival u zou sturen, gebaseerd op uw voorkeuren.</div>
-  </div>
+<div class="card-body">
+  <p><strong class="card-title">Weekly Competitive Digest</strong></p>
 
-  <div class="card-body">
-    <p><strong>Weekly Competitive Digest</strong></p>
-    <p class="subtitle mb-14">
-      Hier is een voorbeeld van hoe uw wekelijkse update eruit zou zien.
-    </p>
+  <p class="subtitle mb-14">
+    Hier is een voorbeeld van hoe uw wekelijkse update eruit zou zien.
+  </p>
 
-    <ul class="soft-list">
-      <li>
-        <strong>CompetitorOne</strong><br>
-        • Nieuwe feature gelanceerd: “AI Analytics Dashboard”<br>
-        • Website traffic +12% volgens SimilarWeb<br>
-        • Hiring: 3 nieuwe engineering posities
-      </li>
+  <ul class="soft-list">
+    <li class="subtitle">
+      <strong class="card-title">CompetitorOne</strong><br>
+      • Nieuwe feature gelanceerd: “AI Analytics Dashboard”<br>
+      • Website traffic +12% volgens SimilarWeb<br>
+      • Hiring: 3 nieuwe engineering posities
+    </li>
 
-      <li>
-        <strong>CompetitorTwo</strong><br>
-        • Pricing update: Starter plan verhoogd van €29 → €39<br>
-        • 1 nieuwe review op TrustPilot (4 ★)<br>
-        • Blogpost: “Ons 2025 Product Vision”
-      </li>
+    <li class="subtitle">
+      <strong class="card-title">CompetitorTwo</strong><br>
+      • Pricing update: Starter plan verhoogd van €29 → €39<br>
+      • 1 nieuwe review op TrustPilot (4 ★)<br>
+      • Blogpost: “Ons 2025 Product Vision”
+    </li>
 
-      <li>
-        <strong>Markttrends</strong><br>
-        • Funding: €18M Series A voor StartupX in dezelfde niche<br>
-        • Regulatory update: EU data-compliance wijziging vanaf juni 2025
-      </li>
-    </ul>
+    <li class="subtitle">
+      <strong class="card-title">Markttrends</strong><br>
+      • Funding: €18M Series A voor StartupX in dezelfde niche<br>
+      • Regulatory update: EU data-compliance wijziging vanaf juni 2025
+    </li>
+  </ul>
 
-    <p class="card-meta mt-12">
-      Opmerking: dit is een demo-voorbeeld.
-      De echte mails tonen enkel bedrijven uit uw watchlist met <code>digest_enabled = True</code> en de geselecteerde signaaltypes.
-    </p>
-  </div>
+  <p class="card-meta mt-12">
+    Opmerking: dit is een demo-voorbeeld.
+    De echte mails tonen enkel bedrijven uit uw watchlist en de geselecteerde signaaltypes.
+  </p>
 </div>
 
+
 {% endblock %}
+
 
 
 

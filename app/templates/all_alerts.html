@@ -12,7 +12,7 @@
   </div>
 </div>
 
-<a href="{{ url_for('main.dashboard') }}" class="button mb-14">← Terug naar dashboard</a>
+<a href="{{ url_for('main.dashboard') }}" class="button mb-14 w-100 w-md-auto">← Terug naar dashboard</a>
 
 <section class="card soft-shadow fade-in">
   <div class="card-header">
@@ -26,8 +26,8 @@
       <ul class="soft-list">
         {% for a in alerts %}
           <li class="alert-item">
-            <strong>{{ a["type"] }}</strong> —
-            <a href="{{ url_for('main.company_detail', company_id=a['company_id']) }}">
+            <strong class="card-title">{{ a["type"] }}</strong> —
+            <a class="subtitle" href="{{ url_for('main.company_detail', company_id=a['company_id']) }}">
               {{ a["description"] }}
             </a>
             <br>
@@ -44,6 +44,7 @@
 </section>
 
 {% endblock %}
+
 
 
 

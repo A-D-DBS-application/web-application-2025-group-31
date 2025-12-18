@@ -52,12 +52,12 @@
     {% if watchlist %}
       <ul class="soft-list">
         {% for item in watchlist %}
-          <li>{{ item }}</li>
+          <li class="card-title">{{ item }}</li>
         {% endfor %}
       </ul>
     {% else %}
       <div class="empty-state">
-        <h3>Geen bedrijven in watchlist</h3>
+        <h3 class="card-title">Geen bedrijven in watchlist</h3>
         <p class="subtitle">Voeg bedrijven toe om strategische signalen te monitoren.</p>
         <a href="{{ url_for('main.companies') }}" class="button small">Bedrijven beheren</a>
       </div>
@@ -80,12 +80,12 @@
     <form method="POST" class="mb-30">
       <input type="hidden" name="form_type" value="watchlist_config">
 
-      <h3>Watchlist instellingen</h3>
+      <h3 class="card-title">Watchlist instellingen</h3>
 
       <div class="grid-2">
 
         <div>
-          <h4>Bedrijven</h4>
+          <h4 class="card-title">Bedrijven</h4>
           <ul class="soft-list scroll">
             {% for c in companies %}
               <li>
@@ -100,7 +100,7 @@
         </div>
 
         <div>
-          <h4>Metrics</h4>
+          <h4 class="card-title">Metrics</h4>
           <ul class="soft-list scroll">
             {% for m in metric_options %}
               <li>
@@ -123,7 +123,7 @@
     <form method="POST">
       <input type="hidden" name="form_type" value="competitor_config">
 
-      <h3>Competitor tracking</h3>
+      <h3 class="card-title">Competitor tracking</h3>
       <p class="subtitle">Selecteer welke concurrenten Rival actief moet opvolgen.</p>
 
       <ul class="soft-list scroll">
@@ -156,13 +156,14 @@
       <ul class="soft-list">
         {% for a in alerts %}
           <li class="list-item-12">
-            <strong>{{ a.type }}</strong> —
-            <a href="{{ url_for('main.company_detail', company_id=a['company_id']) }}">
+            <strong class="card-title">{{ a.type }}</strong> —
+            <a class="subtitle" href="{{ url_for('main.company_detail', company_id=a['company_id']) }}">
               {{ a.description }}
             </a>
             <br>
             <span class="badge-soft">{{ a.time.strftime('%Y-%m-%d') }}</span>
           </li>
+
         {% endfor %}
       </ul>
 
@@ -175,7 +176,7 @@
       {% endif %}
     {% else %}
       <div class="empty-state">
-        <h3>Geen recente meldingen</h3>
+        <h3 class="card-title">Geen recente meldingen</h3>
         <p class="subtitle">
           Nieuwe strategische signalen verschijnen automatisch in dit overzicht.
         </p>
@@ -185,6 +186,7 @@
 </section>
 
 {% endblock %}
+
 
 
 

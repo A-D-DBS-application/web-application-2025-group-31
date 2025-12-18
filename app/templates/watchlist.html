@@ -5,7 +5,7 @@
 
 <div class="topbar">
   <div class="topbar-left">
-    <h1>Watchlist vergelijking</h1>
+    <h1 class="page-title">Watchlist vergelijking</h1>
     <p class="subtitle">Geselecteerde bedrijven tegenover gekozen metrics.</p>
   </div>
 </div>
@@ -23,9 +23,9 @@
       <p class="subtitle">Geen metrics geselecteerd (configureer op Dashboard).</p>
     {% else %}
 
-      <div class="table-scroll">
+      <div class="table-scroll table-responsive">
         <table class="table">
-          <thead>
+          <thead class = text-nowrap>
             <tr>
               <th>Bedrijf</th>
               {% for m in metrics %}<th>{{ m }}</th>{% endfor %}
@@ -45,14 +45,16 @@
         </table>
       </div>
 
+      <hr class="form-separator">
+
       <div class="card-meta mt-16">
-        <strong>Audit bronnen per bedrijf:</strong>
+        <strong class="card-title">Audit bronnen per bedrijf:</strong>
       </div>
 
       <ul class="audit-list mt-10">
         {% for c in companies %}
           <li>
-            <strong>{{ c.name }}:</strong>
+            <strong class="card-title">{{ c.name }}:</strong>
 
             {% set logs = logs_by_company.get(c.company_id, []) %}
             {% if logs %}
@@ -65,13 +67,13 @@
                 </span>
               {% endfor %}
             {% else %}
-              <em>Geen logs</em>
+              <em class="subtitle">Geen logs</em>
             {% endif %}
           </li>
         {% endfor %}
       </ul>
 
-      <div class="export-row mt-16">
+      <div class="export-row mt-16 d-flex flex-wrap gap-2">
         <a class="button small action-btn" href="{{ url_for('main.export_watchlist_audit') }}?format=csv">Export CSV</a>
         <a class="button small action-btn" href="{{ url_for('main.export_watchlist_audit') }}?format=json">Export JSON</a>
       </div>
@@ -81,3 +83,6 @@
 </section>
 
 {% endblock %}
+
+
+

@@ -520,6 +520,18 @@ select:focus,
 
 .table tr:last-child td { border-bottom: none; }
 
+/* Bootstrap table reset (design-neutraal): jouw tokens blijven leidend */
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--text-main);
+  color: var(--text-main);
+}
+
+.table > :not(caption) > * > * {
+  background-color: transparent;
+  color: var(--text-main);
+}
+
 .tag {
   display: inline-flex;
   align-items: center;

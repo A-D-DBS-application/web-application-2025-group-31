@@ -33,7 +33,7 @@
       >
 
       <label class="mt-10">Sector (optioneel)</label>
-      <select name="sector_id" class="form-control">
+      <select name="sector_id" class="form-control w-100 w-md-auto">
         <option value="">-- kies een sector --</option>
         {% for s in sectors %}
           <option value="{{ s.sector_id }}">{{ s.name }}</option>
@@ -68,6 +68,7 @@
   });
 </script>
 {% endblock %}
+
 
 
 

@@ -16,14 +16,14 @@
 
 <!-- SECTOR FILTER -->
 <div class="mb-20">
-  <form method="GET" action="{{ url_for('main.companies') }}" class="filter-row">
+  <form method="GET" action="{{ url_for('main.companies') }}" class="filter-row d-flex flex-wrap align-items-center gap-2">
     <label for="sector_filter" class="form-label">Filter op sector</label>
 
     <select
       name="sector_id"
       id="sector_filter"
       onchange="this.form.submit()"
-      class="form-control"
+      class="form-control w-auto"
     >
       <option value="">-- Alle Sectoren --</option>
 
@@ -47,7 +47,7 @@
 
   <div class="card-body">
     {% if companies %}
-      <div class="table-scroll">
+      <div class="table-scroll table-responsive">
         <table class="table">
           <thead>
             <tr>
@@ -144,5 +144,6 @@
 </section>
 
 {% endblock %}
+
 
 
