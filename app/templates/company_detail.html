@@ -90,7 +90,14 @@
     <h2 class="card-title">Pricing</h2>
   </div>
   <div class="card-body">
-    <p class="card-title">{{ company.pricing or "Geen pricing gevonden" }}</p>
+    <p class="card-title">
+      {{ company.pricing or "Geen pricing gevonden" }}
+    </p>
+
+    <span class="badge-soft">
+      Pricing tier: {{ pricing_tier_label }} ({{ pricing_tier_code }})
+    </span>
+
   </div>
 </section>
 
@@ -180,22 +187,23 @@
 <section class="card soft-shadow fade-in mt-20">
   <div class="card-header">
     <h2 class="card-title">Vergelijkbare bedrijven</h2>
-    <div class="card-meta">Top 5 op basis van baseline report velden</div>
+    <div class="card-meta">
+      Top 5 meest vergelijkbare bedrijven (op volgorde)
+    </div>
   </div>
 
   <div class="card-body">
     {% if similar and similar|length > 0 %}
       <ul class="soft-list">
-        {% for other, score in similar %}
+        {% for other, _ in similar %}
           <li class="list-item-12">
-            <strong class="card-title">{{ other.name }}</strong>
-
-            <span class="badge-soft" style="margin-left: 10px;">
-              Similarity: {{ score|round(2) }}%
-            </span>
+            <strong class="card-title">
+              {{ loop.index }}. {{ other.name }}
+            </strong>
 
             <div class="card-meta mt-10">
-              <a class="subtitle" href="{{ url_for('main.company_detail', company_id=other.company_id) }}">
+              <a class="subtitle"
+                 href="{{ url_for('main.company_detail', company_id=other.company_id) }}">
                 Bekijk baseline →
               </a>
             </div>
@@ -207,6 +215,8 @@
     {% endif %}
   </div>
 </section>
+
+<!-- Historische trends -->
 
 <section class="card soft-shadow fade-in mt-20">
   <div class="card-header">
@@ -290,6 +300,15 @@
 {% endblock %}
 
 {% block scripts %}
+{# ✅ NODIGE FIX: voorkom Undefined -> tojson crash #}
+{% set pricing_labels = pricing_labels|default([]) %}
+{% set pricing_values = pricing_values|default([]) %}
+{% set hiring_labels = hiring_labels|default([]) %}
+{% set hiring_values = hiring_values|default([]) %}
+{% set review_distribution_values = review_distribution_values|default([0,0,0,0,0]) %}
+{% set pricing_tier_label = pricing_tier_label|default("Onbekend") %}
+{% set pricing_tier_code = pricing_tier_code|default(0) %}
+
 <script>
   // Data uit Flask
   const pricingLabels = {{ pricing_labels|tojson }};
@@ -299,6 +318,7 @@
   const hiringValues = {{ hiring_values|tojson }};
 
   const reviewDistribution = {{ review_distribution_values|tojson }};
+  const pricingTierCode = {{ pricing_tier_code|default(0)|int }};
 
   function destroyIfExists(canvas) {
     if (canvas && canvas._chartInstance) {
@@ -334,7 +354,14 @@
     if (L.length === 0) return;
 
     const xLabels = L.map(d => String(d).slice(0, 10));
-    const yValues = V.map(v => (v === null || v === undefined) ? null : Number(v));
+    const yValues = V.map(v => {
+      if (v === null || v === undefined) return null;
+      let n = Math.round(Number(v));
+      if (Number.isNaN(n)) return null;
+      if (n < 0) n = 0;
+      if (n > 5) n = 5;
+      return n;
+    });
 
     const chart = new Chart(canvas.getContext('2d'), {
       type: 'line',
@@ -459,6 +486,7 @@
   buildReviewBarChart();
 </script>
 {% endblock %}
+
 
 
 

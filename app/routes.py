@@ -832,8 +832,10 @@ def company_detail(company_id):
     review_distribution_values = review_distribution(company)
 
     # --------- SIMILAR COMPANIES (MVP) ---------
+    from app.similarity import top_similar_companies_in_same_sector
+
     all_companies = Company.query.all()
-    similar = top_similar_companies(company, all_companies, top_n=5)
+    similar = top_similar_companies_in_same_sector(company, all_companies, top_n=5)
 
     return render_template(
         'company_detail.html',
