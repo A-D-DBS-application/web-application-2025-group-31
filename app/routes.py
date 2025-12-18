@@ -8,6 +8,7 @@ import io
 from app.scraper import scrape_website
 from datetime import datetime
 from app.similarity import top_similar_companies
+from app.auth import login_required
 bp = Blueprint('main', __name__)
 
 METRIC_OPTIONS = ["Pricing", "Features", "Reviews", "Funding", "Hiring"]
@@ -564,10 +565,8 @@ def logout():
 # =====================================================
 
 @bp.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     user = AppUser.query.get(session["user_id"])
     scrape_result = None
 
@@ -686,10 +685,8 @@ def dashboard():
 # =====================================================
 
 @bp.route('/company/<int:company_id>')
+@login_required
 def company_detail(company_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     company = Company.query.get_or_404(company_id)
 
     # Alle wijzigingen voor dit bedrijf (nieuw → oud)
@@ -737,10 +734,8 @@ def company_detail(company_id):
 # =====================================================
 
 @bp.route('/watchlist')
+@login_required
 def watchlist():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     ids = session.get('watchlist_companies', [])
     try:
         ids = [int(cid) for cid in ids]
@@ -839,10 +834,8 @@ def watchlist():
 # =====================================================
 
 @bp.route('/export-watchlist-audit')
+@login_required
 def export_watchlist_audit():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     fmt = request.args.get("format", "csv").lower()
 
     ids = session.get('watchlist_companies', [])
@@ -900,10 +893,8 @@ def export_watchlist_audit():
 # =====================================================
 
 @bp.route('/companies', methods=['GET', 'POST'])
+@login_required
 def companies():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     message = ""
 
     # Alleen nog watchlist-actie toelaten (geen manual add meer)
@@ -953,6 +944,7 @@ from pptx import Presentation
 from pptx.util import Inches, Pt
 
 @bp.route('/company/<int:company_id>/export-pdf')
+@login_required
 def export_pdf(company_id):
     company = Company.query.get_or_404(company_id)
 
@@ -1003,6 +995,7 @@ def export_pdf(company_id):
     )
 
 @bp.route('/company/<int:company_id>/export-slides')
+@login_required
 def export_slides(company_id):
     company = Company.query.get_or_404(company_id)
 
@@ -1050,10 +1043,8 @@ def export_slides(company_id):
     )
 
 @bp.route('/company/<int:company_id>/export')
+@login_required
 def export_company(company_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     c = Company.query.get_or_404(company_id)
     format = request.args.get("format", "json").lower()
 
@@ -1131,10 +1122,8 @@ def export_company(company_id):
 # =====================================================
 
 @bp.route('/scrape', methods=['GET', 'POST'])
+@login_required
 def scrape():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     # URL uit querystring (bijv. quick scrape vanuit dashboard)
     url_from_query = request.args.get("url")
 
@@ -1324,10 +1313,8 @@ def scrape():
 # =====================================================
 
 @bp.route('/audit-logs')
+@login_required
 def audit_logs():
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     logs = AuditLog.query.order_by(AuditLog.retrieved_at.desc()).all()
 
     enriched_logs = []
@@ -1345,10 +1332,8 @@ def audit_logs():
 
 
 @bp.route('/audit-logs/export')
+@login_required
 def export_all_audit_logs():
-    if "user_id" not in session:
-        return redirect(url_for("main.login"))
-
     fmt = request.args.get("format", "csv").lower()
 
     logs = AuditLog.query.order_by(AuditLog.retrieved_at.desc()).all()
@@ -1392,19 +1377,15 @@ def export_all_audit_logs():
 # =====================================================
 
 @bp.route("/weekly-mail-settings")
+@login_required
 def weekly_mail_settings():
-    if "user_id" not in session:
-        return redirect(url_for("main.login"))
-
     user = AppUser.query.get(session["user_id"])
     return render_template("weekly_mail.html", user=user)
 
 
 @bp.route("/update-weekly-mail", methods=["POST"])
+@login_required
 def update_weekly_mail():
-    if "user_id" not in session:
-        return redirect(url_for("main.login"))
-
     user = AppUser.query.get(session["user_id"])
     user.weekly_digest = request.form.get("digest") == "on"
     db.session.commit()
@@ -1417,10 +1398,8 @@ def update_weekly_mail():
 # =====================================================
 
 @bp.route("/all-alerts")
+@login_required
 def all_alerts():
-    if "user_id" not in session:
-        return redirect(url_for("main.login"))
-
     # Haal ALLE events op (niet limiteren!)
     events = ChangeEvent.query.order_by(
         ChangeEvent.detected_at.desc()
@@ -1448,6 +1427,7 @@ def all_alerts():
 # =====================================================
 
 @bp.route("/api/events")
+@login_required
 def api_events():
     """
     JSON feed van alle gedetecteerde events:
@@ -1506,11 +1486,8 @@ def api_events():
 # =====================================================
 
 @bp.route("/company/<int:company_id>/delete", methods=["POST"])
+@login_required
 def delete_company(company_id):
-    # Controleer of de gebruiker is ingelogd
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     company = Company.query.get(company_id)
     if not company:
         return "Bedrijf niet gevonden", 404
@@ -1531,10 +1508,8 @@ def delete_company(company_id):
 # =====================================================
 
 @bp.route('/company/<int:company_id>/alerts')
+@login_required
 def company_alerts(company_id):
-    if 'user_id' not in session:
-        return redirect(url_for('main.login'))
-
     company = Company.query.get_or_404(company_id)
     
     # Haal alle events op voor dit specifieke bedrijf
