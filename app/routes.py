@@ -10,7 +10,6 @@ from datetime import datetime
 from app.similarity import top_similar_companies
 from app.auth import login_required
 from app.auth import admin_required
-from urllib.parse import urlparse, urlunparse
 
 bp = Blueprint('main', __name__)
 
@@ -336,39 +335,6 @@ def update_company_metrics(company):
     m_hiring.last_updated = datetime.utcnow()
     track_metric_history(company.company_id, "Hiring", hiring_code)
 
-    # 6) TeamSize (voor hiring grafiek als numerieke trend)
-    if company.team_size is not None:
-        track_metric_history(company.company_id, "TeamSize", company.team_size)
-
-def normalize_url(url: str) -> str:
-    if not url:
-        return ""
-    url = url.strip()
-
-    # Voeg scheme toe als user "example.com" plakt
-    if "://" not in url:
-        url = "https://" + url
-
-    p = urlparse(url)
-
-    scheme = (p.scheme or "https").lower()
-    netloc = (p.netloc or "").lower()
-
-    # verwijder default ports
-    if netloc.endswith(":80") and scheme == "http":
-        netloc = netloc[:-3]
-    if netloc.endswith(":443") and scheme == "https":
-        netloc = netloc[:-4]
-
-    path = p.path or ""
-    # trim trailing slash (behalve root)
-    if path != "/" and path.endswith("/"):
-        path = path[:-1]
-
-    # drop fragment, keep query (als je wil kun je query ook droppen)
-    normalized = urlunparse((scheme, netloc, path, "", p.query or "", ""))
-    return normalized
-
 
 # =====================================================
 # INDEX
@@ -442,11 +408,8 @@ def refresh_all_companies():
 
             try:
                 # --- SCRAPEN ---
-                normalized = normalize_url(company.website_url)
-                company.website_url = normalized
-                result = scrape_website(normalized)
-
-
+                result = scrape_website(company.website_url)
+                
                 if result.get("error"):
                     continue
 
@@ -725,9 +688,6 @@ def dashboard():
 # COMPANY DETAIL
 # =====================================================
 
-from collections import OrderedDict
-from datetime import datetime
-
 @bp.route('/company/<int:company_id>')
 @login_required
 def company_detail(company_id):
@@ -739,103 +699,23 @@ def company_detail(company_id):
               .order_by(ChangeEvent.detected_at.desc())
               .all())
 
-    # ---------- Helpers ----------
-    # 1 punt per dag (laatste waarde van die dag) uit MetricHistory
-    def history_series_daily_last(metric_name: str):
+    # --------- HISTORIEK VOOR GRAFIEKEN ---------
+    def history_series(metric_name: str):
         rows = (MetricHistory.query
                 .filter_by(company_id=company_id, name=metric_name)
                 .order_by(MetricHistory.recorded_at.asc())
                 .all())
+        labels = [r.recorded_at.strftime("%Y-%m-%d %H:%M") for r in rows]
+        values = [float(r.value) if r.value is not None else None for r in rows]
+        return labels, values
 
-        by_day = OrderedDict()
-        for r in rows:
-            if not r.recorded_at:
-                continue
-            day = r.recorded_at.date().isoformat()  # "YYYY-MM-DD"
-            by_day[day] = float(r.value) if r.value is not None else None
-
-        return list(by_day.keys()), list(by_day.values())
-
-    # Pricing: count pricing-related ChangeEvents per dag (betere “intensiteit”)
-    def pricing_change_series_daily():
-        pricing_types = {"pricing_change", "pricing_added", "pricing_removed"}
-
-        rows = (ChangeEvent.query
-                .filter(ChangeEvent.company_id == company_id)
-                .order_by(ChangeEvent.detected_at.asc())
-                .all())
-
-        counts = OrderedDict()
-        for e in rows:
-            if not e.detected_at:
-                continue
-            if e.event_type not in pricing_types:
-                continue
-            day = e.detected_at.date().isoformat()
-            counts[day] = counts.get(day, 0) + 1
-
-        return list(counts.keys()), list(counts.values())
-
-    # Reviews: absolute + optioneel monotonic (nooit dalen door bronfluctuaties)
-    def make_monotonic_non_decreasing(values):
-        out = []
-        cur = None
-        for v in values:
-            if v is None:
-                out.append(cur)  # hou laatste bekende aan (stabiel)
-                continue
-            if cur is None:
-                cur = v
-            else:
-                cur = max(cur, v)  # nooit dalen
-            out.append(cur)
-        return out
-
-    # ---------- Series ----------
-    # Pricing = events/dag
-    pricing_labels, pricing_values = pricing_change_series_daily()
-
-    # Hiring = TeamSize (numeriek) als die bestaat, anders fallback op oude Hiring code
-    hiring_labels, hiring_values = history_series_daily_last("TeamSize")
-    if not hiring_labels:
-        hiring_labels, hiring_values = history_series_daily_last("Hiring")
-
-    # Reviews = absolute (monotonic zodat het niet zakt bij API/fallback issues)
-    # --------- REVIEW DISTRIBUTIE (1★ → 5★) ---------
-    def review_distribution(company):
-        """
-        Geeft altijd exact 5 waarden terug:
-        [1★, 2★, 3★, 4★, 5★]
-        """
-
-        # DEFAULT: geen data
-        dist = [0, 0, 0, 0, 0]
-
-        # 🔹 Als je later echte Google data hebt → hier uitbreiden
-        # 🔹 Voor nu: simpele heuristiek op basis van review count + rating
-        try:
-            from app.google_reviews import get_google_reviews
-            count, label = get_google_reviews(company.name)
-
-            # simpele verdeling: meeste reviews rond 4–5
-            if count and count > 0:
-                dist[4] = int(count * 0.55)  # 5★
-                dist[3] = int(count * 0.25)  # 4★
-                dist[2] = int(count * 0.10)  # 3★
-                dist[1] = int(count * 0.05)  # 2★
-                dist[0] = max(0, count - sum(dist))
-        except Exception:
-            pass
-
-        return dist
-
-    review_distribution_values = review_distribution(company)
+    pricing_labels, pricing_values = history_series("Pricing")
+    hiring_labels, hiring_values = history_series("Hiring")
+    review_labels, review_values = history_series("Reviews")
 
     # --------- SIMILAR COMPANIES (MVP) ---------
-    from app.similarity import top_similar_companies_in_same_sector
-
     all_companies = Company.query.all()
-    similar = top_similar_companies_in_same_sector(company, all_companies, top_n=5)
+    similar = top_similar_companies(company, all_companies, top_n=5)
 
     return render_template(
         'company_detail.html',
@@ -846,9 +726,12 @@ def company_detail(company_id):
         pricing_values=pricing_values,
         hiring_labels=hiring_labels,
         hiring_values=hiring_values,
-        review_distribution_values=review_distribution_values,
-        similar=similar,
+        review_labels=review_labels,
+        review_values=review_values,
+
+        similar=similar,  # <-- nieuw
     )
+
 
 # =====================================================
 # WATCHLIST
@@ -1033,6 +916,8 @@ def companies():
                 if cid not in wl:
                     wl.append(cid)
                 session['watchlist_companies'] = wl
+                if not session.get('watchlist_metrics'):
+                    session['watchlist_metrics'] = METRIC_OPTIONS
                 message = "✔ Toegevoegd aan watchlist"
             except Exception:
                 message = "❌ Kon niet aan watchlist toevoegen."
@@ -1260,8 +1145,7 @@ def scrape():
         return render_template('scrape.html', result=None, sectors=sectors)
 
     # URL kan uit querystring (GET) of uit formulier (POST) komen
-    raw_url = url_from_query or request.form.get('url')
-    url = normalize_url(raw_url)
+    url = url_from_query or request.form.get('url')
 
     # DEBUG: toon request.form bij POST
     if request.method == 'POST':
