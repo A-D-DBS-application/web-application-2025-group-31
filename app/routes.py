@@ -7,13 +7,54 @@ import csv
 import io
 from app.scraper import scrape_website
 from datetime import datetime
-from app.similarity import top_similar_companies
 from app.auth import login_required
 from app.auth import admin_required
 
 bp = Blueprint('main', __name__)
 
 METRIC_OPTIONS = ["Pricing", "Features", "Reviews", "Funding", "Hiring"]
+
+# ======================================================
+# URL NORMALISATIE
+# ======================================================
+
+from urllib.parse import urlparse, urlunparse
+
+def normalize_url(url: str) -> str:
+    """
+    Normaliseert URLs zodat:
+    - protocol bestaat (https://)
+    - www. wordt verwijderd
+    - trailing slash wordt verwijderd
+    - alles lowercase is
+    """
+    if not url:
+        return ""
+
+    url = url.strip()
+
+    # Voeg protocol toe indien ontbreekt
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    parsed = urlparse(url)
+
+    # Normalize netloc
+    netloc = parsed.netloc.lower()
+    if netloc.startswith("www."):
+        netloc = netloc[4:]
+
+    # Normalize path
+    path = parsed.path.rstrip("/")
+
+    normalized = urlunparse((
+        parsed.scheme,
+        netloc,
+        path,
+        "", "", ""
+    ))
+
+    return normalized
 
 # ======================================================
 # TEKST NORMALISATIE EN VERGELIJKING
@@ -335,6 +376,13 @@ def update_company_metrics(company):
     m_hiring.last_updated = datetime.utcnow()
     track_metric_history(company.company_id, "Hiring", hiring_code)
 
+    # 6) TeamSize (extra historiek voor grafiek op detailpagina)
+    if company.team_size is not None:
+        m_team = get_or_create_metric(company.company_id, "TeamSize")
+        m_team.value = int(company.team_size)
+        m_team.description = f"{int(company.team_size)} medewerkers"
+        m_team.last_updated = datetime.utcnow()
+        track_metric_history(company.company_id, "TeamSize", int(company.team_size))
 
 # =====================================================
 # INDEX
@@ -408,7 +456,15 @@ def refresh_all_companies():
 
             try:
                 # --- SCRAPEN ---
-                result = scrape_website(company.website_url)
+                # --- URL NORMALIZE + SCRAPEN ---
+                normalized_url = normalize_url(company.website_url)
+
+                # (optioneel) schrijf de genormaliseerde url terug zodat je DB consistent blijft
+                if normalized_url and normalized_url != company.website_url:
+                    company.website_url = normalized_url
+
+                result = scrape_website(normalized_url)
+
                 
                 if result.get("error"):
                     continue
@@ -515,7 +571,7 @@ def refresh_all_companies():
                 db.session.add(AuditLog(
                     company_id=existing.company_id,
                     source_name="Scheduled Refresh (APScheduler)",
-                    source_url=existing.website_url
+                    source_url=normalize_url(existing.website_url),
                 ))
                 
                 refreshed_count += 1
@@ -592,7 +648,7 @@ def dashboard():
 
         # --- SCRAPE
         elif form_type == 'scrape':
-            url = request.form.get('scrape_url')
+            url = normalize_url(request.form.get('scrape_url'))
             return redirect(url_for('main.scrape') + f"?url={url}")
 
     # -------------------------
@@ -708,7 +764,6 @@ def company_detail(company_id):
         labels = [r.recorded_at.strftime("%Y-%m-%d %H:%M") for r in rows]
         values = [float(r.value) if r.value is not None else None for r in rows]
         return labels, values
-
     pricing_labels, pricing_values = history_series("Pricing")
     # Hiring chart gebruikt in de template de variabelen hiring_labels/hiring_values,
     # maar we willen daar eigenlijk Team Size tonen.
@@ -717,8 +772,6 @@ def company_detail(company_id):
     # Fallback: als TeamSize niet in je DB zit, pak dan Hiring
     if not hiring_labels and not hiring_values:
         hiring_labels, hiring_values = history_series("Hiring")
-
-    review_labels, review_values = history_series("Reviews")  # blijft bestaan voor historiek
 
     # --------- REVIEW DISTRIBUTIE (zoals gisteren) ---------
     def review_distribution(company):
@@ -787,8 +840,6 @@ def company_detail(company_id):
         hiring_values=hiring_values,
 
         # reviews
-        review_labels=review_labels,
-        review_values=review_values,
         review_distribution_values=review_distribution_values,
 
         # pricing badge
@@ -1213,7 +1264,7 @@ def scrape():
         return render_template('scrape.html', result=None, sectors=sectors)
 
     # URL kan uit querystring (GET) of uit formulier (POST) komen
-    url = url_from_query or request.form.get('url')
+    url = url_from_query or normalize_url(request.form.get('url'))
 
     # DEBUG: toon request.form bij POST
     if request.method == 'POST':
