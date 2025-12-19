@@ -693,7 +693,7 @@ def dashboard():
 def company_detail(company_id):
     company = Company.query.get_or_404(company_id)
 
-    # Alle wijzigingen voor dit bedrijf (nieuw → oud)
+    # --------- WIJZIGINGEN / EVENTS ---------
     events = (ChangeEvent.query
               .filter_by(company_id=company_id)
               .order_by(ChangeEvent.detected_at.desc())
@@ -710,28 +710,95 @@ def company_detail(company_id):
         return labels, values
 
     pricing_labels, pricing_values = history_series("Pricing")
-    hiring_labels, hiring_values = history_series("Hiring")
-    review_labels, review_values = history_series("Reviews")
+    # Hiring chart gebruikt in de template de variabelen hiring_labels/hiring_values,
+    # maar we willen daar eigenlijk Team Size tonen.
+    hiring_labels, hiring_values = history_series("TeamSize")
 
-    # --------- SIMILAR COMPANIES (MVP) ---------
+    # Fallback: als TeamSize niet in je DB zit, pak dan Hiring
+    if not hiring_labels and not hiring_values:
+        hiring_labels, hiring_values = history_series("Hiring")
+
+    review_labels, review_values = history_series("Reviews")  # blijft bestaan voor historiek
+
+    # --------- REVIEW DISTRIBUTIE (zoals gisteren) ---------
+    def review_distribution(company):
+        """
+        Geeft altijd exact 5 waarden terug:
+        [1★, 2★, 3★, 4★, 5★]
+        Simulatie op basis van Google review-count
+        """
+        dist = [0, 0, 0, 0, 0]
+
+        try:
+            from app.google_reviews import get_google_reviews
+            count, _label = get_google_reviews(company.name)
+
+            if count and count > 0:
+                dist[4] = int(count * 0.55)  # 5★
+                dist[3] = int(count * 0.25)  # 4★
+                dist[2] = int(count * 0.10)  # 3★
+                dist[1] = int(count * 0.05)  # 2★
+                dist[0] = max(0, int(count) - sum(dist))  # 1★ rest
+        except Exception:
+            pass
+
+        return dist
+
+    review_distribution_values = review_distribution(company)
+
+    # --------- PRICING TIER (badge + chart) ---------
+    pricing_tier_code = 0
+    if pricing_values:
+        for v in reversed(pricing_values):
+            if v is not None:
+                try:
+                    pricing_tier_code = int(round(float(v)))
+                except Exception:
+                    pricing_tier_code = 0
+                break
+
+    pricing_tier_code = max(0, min(5, pricing_tier_code))
+
+    tier_labels = {
+        0: "Onbekend",
+        1: "Gratis / Freemium",
+        2: "Lage prijsklasse",
+        3: "Midden segment",
+        4: "Hoge prijsklasse",
+        5: "Enterprise",
+    }
+    pricing_tier_label = tier_labels.get(pricing_tier_code, "Onbekend")
+
+    # --------- SIMILAR COMPANIES (SECTOR-FILTER) ---------
     from app.similarity import top_similar_companies_in_same_sector
     all_companies = Company.query.all()
     similar = top_similar_companies_in_same_sector(company, all_companies, top_n=5)
 
+    # --------- RENDER ---------
     return render_template(
-        'company_detail.html',
+        "company_detail.html",
         company=company,
         events=events,
 
+        # grafieken
         pricing_labels=pricing_labels,
         pricing_values=pricing_values,
         hiring_labels=hiring_labels,
         hiring_values=hiring_values,
+
+        # reviews
         review_labels=review_labels,
         review_values=review_values,
+        review_distribution_values=review_distribution_values,
 
-        similar=similar,  # <-- nieuw
+        # pricing badge
+        pricing_tier_label=pricing_tier_label,
+        pricing_tier_code=pricing_tier_code,
+
+        # vergelijkbare bedrijven
+        similar=similar,
     )
+
 
 
 # =====================================================
