@@ -747,28 +747,29 @@ select:focus,
   height: auto;
 }
 
-/* =========================
-   MOBILE LAYOUT (SIDEBAR + WATCHLIST)
-   Alleen ≤ 767.98px
-   ========================= */
 /* =====================================================
    MOBILE ONLY (≤ 767.98px)
-   Sidebar + Watchlist — PC blijft intact
+   Drawer sidebar (alleen mobile include) + watchlist table
+   Desktop blijft intact — hamburger werkt via body.sidebar-open
    ===================================================== */
 @media (max-width: 767.98px) {
 
-  /* ===== MOBIELE TOPBAR ===== */
+  /* ===== TOPBAR (hamburger) ===== */
   .mobile-topbar{
     position: sticky;
     top: 0;
-    z-index: 1200;
+    z-index: 1300;
+    height: 56px;
+
+    display: flex;
+    align-items: center;
+
     background: linear-gradient(135deg, #0b1220, #0e1a2b);
     border-bottom: 1px solid rgba(255,255,255,0.08);
     backdrop-filter: blur(8px);
     padding: 10px 12px;
   }
 
-  /* Hamburger */
   .menu-btn{
     all: unset;
     font-size: 26px;
@@ -783,123 +784,147 @@ select:focus,
     background: rgba(255,255,255,0.08);
   }
 
-  /* Overlay */
+  /* ===== OVERLAY ===== */
   .overlay{
     display: none;
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.35);
-    z-index: 1090;
+    z-index: 1200;
   }
 
   body.sidebar-open .overlay{
     display: block;
   }
 
-  /* ===== SIDEBAR DRAWER ===== */
-  .sidebar{
+  /* =====================================================
+     DRAWER SIDEBAR — alleen mobiele include
+     (werkt met body.sidebar-open toggle)
+     ===================================================== */
+  .mobile-drawer .sidebar{
     position: fixed !important;
-    top: 0;
-    left: 0;
-    width: 280px;
-    height: 100vh !important;
+    top: 56px !important;                 /* onder topbar */
+    left: 0 !important;
+    width: 280px !important;
+    height: calc(100vh - 56px) !important;
+
     transform: translateX(-100%);
     transition: transform 0.25s ease;
-    z-index: 1100;
-    overflow-y: auto;
-    background: #0b1220;
+
+    z-index: 1250 !important;
+    background: #0b1220 !important;
+
+    /* header/nav/footer structuur */
+    display: grid !important;
+    grid-template-rows: auto 1fr auto !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important; /* nav scrollt */
   }
 
-  body.sidebar-open .sidebar{
+  body.sidebar-open .mobile-drawer .sidebar{
     transform: translateX(0);
   }
 
-  /* Sidebar header: RIVAL altijd bovenaan */
-  .sidebar-header{
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+  /* Header zichtbaar */
+  .mobile-drawer .sidebar .sidebar-header{
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 
-    position: sticky;
-    top: 0;
-    z-index: 2;
+    padding: 18px 16px 12px 16px !important;
+    margin: 0 !important;
 
-    background: #0b1220;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    background: #0b1220 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
   }
 
-  /* Sidebar nav */
-  .sidebar nav{
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding-top: 12px;
+  /* Titel/tagline kleuren (failsafe) */
+  .mobile-drawer .sidebar .sidebar-header h1,
+  .mobile-drawer .sidebar .sidebar-header h2,
+  .mobile-drawer .sidebar .sidebar-tagline{
+    color: #f5f7fa !important;
   }
 
-  .sidebar nav a{
-    display: block;
-    width: 100%;
+  /* Nav */
+  .mobile-drawer .sidebar nav{
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+
+    padding: 12px 16px 16px 16px !important;
+    margin: 0 !important;
+
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .sidebar nav .label{
+  .mobile-drawer .sidebar nav a{
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .mobile-drawer .sidebar nav .label{
     display: flex;
     align-items: center;
     gap: 10px;
   }
 
-  /* ===== WATCHLIST (PC layout + horizontal scroll) ===== */
-
-  /* Page header stacking */
-  .topbar{
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  /* Footer */
+  .mobile-drawer .sidebar .sidebar-footer{
+    display: block !important;
+    padding: 14px 16px !important;
+    margin: 0 !important;
+    border-top: 1px solid rgba(255,255,255,0.08) !important;
+    background: #0b1220 !important;
+    color: rgba(245,247,250,0.75) !important;
   }
 
-  .page-title{
-    font-size: 22px;
-    line-height: 1.25;
-  }
-
-  .subtitle{
-    font-size: 14px;
-    line-height: 1.35;
-  }
-
-  /* Tabel: EXACT PC layout, alleen scrollbaar */
+  /* =====================================================
+     WATCHLIST TABLE — zelfde structuur als PC
+     + horizontaal scrollen
+     + geen afknippen
+     ===================================================== */
   .table-scroll{
-    overflow-x: auto;
+    overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
   }
 
-  .table{
-    width: 100%;          /* 🔑 GEEN max-content */
-    table-layout: auto;   /* zoals desktop */
+  /* Tabel blijft tabel, maar wordt breed genoeg voor swipe */
+  .watchlist-table{
+    width: 100%;
+    min-width: 900px;          /* pas aan naargelang # metrics */
+    table-layout: auto;
   }
 
-  .table th,
-  .table td{
-    white-space: nowrap;  /* geen afbreken */
+  /* Koppen op 1 lijn */
+  .watchlist-table th{
+    white-space: nowrap;
     word-break: normal;
   }
 
-  /* Audit lijst */
-  .audit-list li{
-    line-height: 1.35;
-  }
-
-  .audit-chip{
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+  /* Waarden mogen wrappen binnen cel => niet afknippen */
+  .watchlist-table td{
     white-space: normal;
+    overflow-wrap: anywhere;
     word-break: normal;
-    overflow-wrap: normal;
-    max-width: 100%;
+    vertical-align: top;
+  }
+
+  /* Compacte padding (optioneel, maar helpt op gsm) */
+  .watchlist-table th,
+  .watchlist-table td{
+    padding: .5rem .6rem;
   }
 }
+
+
+
+
+
+
 
 
 
