@@ -1,11 +1,16 @@
-import os 
-
+import os
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+
+    _db_url = os.environ.get("DATABASE_URL", "").strip()
+    if _db_url.startswith("postgres://"):
+        _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+
+    SQLALCHEMY_DATABASE_URI = _db_url
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # NIEUW: Scheduler instellingen
-    SCHEDULER_API_ENABLED = False  # Houd de API uit, we hebben die niet nodig
-    SCHEDULER_ENABLED = True  # Schakel de scheduler in
+    SCHEDULER_API_ENABLED = False
+    SCHEDULER_ENABLED = True
+
 
 
