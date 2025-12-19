@@ -747,51 +747,55 @@ select:focus,
   height: auto;
 }
 
-/* Mobiele topbar */
-.mobile-topbar{
-  position: sticky;
-  top: 0;
-  z-index: 1200;
+/* =========================
+   MOBILE LAYOUT (SIDEBAR + WATCHLIST)
+   Alleen ≤ 767.98px
+   ========================= */
+@media (max-width: 767.98px) {
 
-  /* RIVAL-stijl i.p.v. wit/blauw */
-  background: linear-gradient(135deg, #0b1220, #0e1a2b);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  /* ===== MOBIELE TOPBAR ===== */
+  .mobile-topbar{
+    position: sticky;
+    top: 0;
+    z-index: 1200;
 
-  /* blur mag, maar niet “wit” */
-  backdrop-filter: blur(8px);
-  padding: 10px 12px;
-}
+    background: linear-gradient(135deg, #0b1220, #0e1a2b);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(8px);
+    padding: 10px 12px;
+  }
 
-/* Hamburger (reset Bootstrap look + match sidebar) */
-.menu-btn{
-  all: unset;                 /* reset bootstrap button styles */
-  font-size: 26px;
-  line-height: 1;
-  cursor: pointer;
+  /* Hamburger */
+  .menu-btn{
+    all: unset;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    color: #f5f7fa;
+    padding: 6px 10px;
+    border-radius: 10px;
+  }
 
-  color: #f5f7fa;             /* match sidebar tekstkleur */
-  padding: 6px 10px;
-  border-radius: 10px;
-}
+  .menu-btn:hover{
+    background: rgba(255,255,255,0.08);
+  }
 
-.menu-btn:hover{
-  background: rgba(255,255,255,0.08);
-}
+  /* Overlay */
+  .overlay{
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 1090;
+  }
 
-/* Overlay mobiel */
-.overlay{
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  z-index: 1090;
-}
+  body.sidebar-open .overlay{
+    display: block;
+  }
 
-/* Alleen mobiel: maak de sidebar een drawer + forceer verticaal menu */
-@media (max-width: 767.98px){
-
+  /* ===== SIDEBAR DRAWER ===== */
   .sidebar{
-    position: fixed !important;     /* override sticky */
+    position: fixed !important;
     top: 0;
     left: 0;
     width: 280px;
@@ -800,9 +804,6 @@ select:focus,
     transition: transform 0.25s ease;
     z-index: 1100;
     overflow-y: auto;
-
-    /* als jouw sidebar al dark is mag je deze weglaten,
-       maar dit voorkomt witte achtergrond door bootstrap */
     background: #0b1220;
   }
 
@@ -810,19 +811,26 @@ select:focus,
     transform: translateX(0);
   }
 
-  body.sidebar-open .overlay{
-    display: block;
+  /* Sidebar header altijd bovenaan */
+  .sidebar-header{
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #0b1220;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
   }
 
-  /* ✅ Fix: menu-items niet horizontaal */
+  /* Sidebar nav verticaal */
   .sidebar nav{
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding-top: 12px;
   }
 
   .sidebar nav a{
-    display: block;     /* geen inline/inline-flex */
+    display: block;
     width: 100%;
   }
 
@@ -830,6 +838,61 @@ select:focus,
     display: flex;
     align-items: center;
     gap: 10px;
+  }
+
+  /* ===== WATCHLIST ===== */
+
+  /* Topbar stacking */
+  .topbar{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .page-title{
+    font-size: 22px;
+    line-height: 1.25;
+  }
+
+  .subtitle{
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  /* Tabel: scroll i.p.v. woord-afbreken */
+  .table-scroll{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table{
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .table th,
+  .table td{
+    white-space: nowrap;
+    word-break: normal;
+  }
+
+  .table td{
+    overflow-wrap: anywhere;
+  }
+
+  /* Audit lijst */
+  .audit-list li{
+    line-height: 1.35;
+  }
+
+  .audit-chip{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: anywhere;
+    max-width: 100%;
   }
 }
 
