@@ -3,15 +3,13 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 import os
-from dotenv import load_dotenv
-load_dotenv()
 
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    raise RuntimeError("OPENAI_API_KEY ontbreekt")
+# Load API key safely
+API_KEY = os.getenv("OPENAI_API_KEY")
+if not API_KEY:
+    raise ValueError("OPENAI_API_KEY omgevingsvariabele is niet ingesteld. Kan de AI-service niet gebruiken.")
 
-client = OpenAI(api_key=api_key)
-print("ENV OPENAI_API_KEY =", os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=API_KEY)
 
 # ==========================================================
 # 1. FETCH RAW HTML TEXT
@@ -43,12 +41,14 @@ def generate_ai_description(text: str) -> str:
     system_msg = (
         "You summarize website content. Ignore menus, navigation, footers, "
         "cookie banners, language selectors, and UI text. Write a clean, "
-        "human-friendly description in 2–3 sentences focusing on what the company does."
+        "human-friendly description in 4–6 sentences. Use 3–6 short lines "
+        "(line breaks) focusing on what the company does, for whom, and why it matters."
     )
 
     user_msg = f"""
-Vat deze website samen in 2–3 zinnen.
-Negeer navigatie, footers, menus, cookie banners en taalopties.
+        Vat deze website samen in 4–6 zinnen.
+        Gebruik 3–6 korte regels (met line breaks). Geen 1-liners.
+        Negeer navigatie, footers, menus, cookie banners en taalopties.
 
 CONTENT:
 {text}
@@ -187,6 +187,24 @@ Rules:
     use them as "source": "explicit".
 - If you infer or estimate from context, use "source": "inferred".
 - Only add a few HIGH-SIGNAL data points (max 10 total).
+
+===========================================================
+TEXT LENGTH & FORMAT (VERY IMPORTANT)
+===========================================================
+For these fields:
+- ai_summary
+- value_proposition
+- product_description
+- target_segment
+- traction_signals
+
+Write 3–5 short lines EACH (use newline characters).
+No single-line answers. Be specific and grounded in the content.
+Do NOT add generic filler; add only concrete details you can infer from the text.
+
+For pricing:
+- If explicit pricing exists: 1–3 lines with the exact pricing and plan structure.
+- If inferred tier: 1–2 lines explaining why.
 
 ===========================================================
 WHAT YOU MUST RETURN

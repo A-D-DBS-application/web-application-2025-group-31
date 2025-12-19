@@ -714,8 +714,9 @@ def company_detail(company_id):
     review_labels, review_values = history_series("Reviews")
 
     # --------- SIMILAR COMPANIES (MVP) ---------
+    from app.similarity import top_similar_companies_in_same_sector
     all_companies = Company.query.all()
-    similar = top_similar_companies(company, all_companies, top_n=5)
+    similar = top_similar_companies_in_same_sector(company, all_companies, top_n=5)
 
     return render_template(
         'company_detail.html',
@@ -1344,6 +1345,9 @@ def audit_logs():
 
     return render_template("audit_logs.html", logs=enriched_logs)
 
+# ====================================================
+# EXPORT ALL AUDIT LOGS (CSV / JSON)
+# ====================================================
 
 @bp.route('/audit-logs/export')
 @admin_required

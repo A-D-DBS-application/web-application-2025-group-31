@@ -91,31 +91,26 @@ def similarity_score(company_a, company_b):
 # Sector filtering (nieuw)
 # -----------------------------
 
-def _get_sector(company):
-    """
-    Haal sector/industry veld op (pas desnoods namen aan jouw model aan).
-    """
-    # meest waarschijnlijke veldnamen:
-    for attr in ("sector", "industry", "category"):
-        val = getattr(company, attr, None)
-        if val:
-            return str(val).strip().lower()
-    return None
+def _get_sector_id(company):
+    # Betrouwbaar: sector_id is een int/None
+    return getattr(company, "sector_id", None)
 
 def filter_by_sector(target_company, all_companies):
     """
-    Behoud alleen bedrijven met dezelfde sector als target.
-    Als target geen sector heeft, return alle bedrijven (geen filter).
+    Behoud alleen bedrijven met dezelfde sector_id als target.
+    Als target geen sector_id heeft, return alle bedrijven (geen filter).
     """
-    target_sector = _get_sector(target_company)
-    if not target_sector:
-        return list(all_companies)
+    target_sector_id = _get_sector_id(target_company)
+
+    # Als target geen sector heeft: geen filtering mogelijk
+    if not target_sector_id:
+        return [c for c in all_companies if c.company_id != target_company.company_id]
 
     filtered = []
     for c in all_companies:
         if c.company_id == target_company.company_id:
             continue
-        if _get_sector(c) == target_sector:
+        if _get_sector_id(c) == target_sector_id:
             filtered.append(c)
 
     return filtered
