@@ -45,59 +45,56 @@ Gebruikers kunnen:
 
 
 ## Lokale Installatie
-Volg deze stappen om een lokale kopie van Rival op je computer te draaien voor ontwikkeling of testen.
 
-1. Vereisten
-Zorg ervoor dat je de volgende software hebt geïnstalleerd:
+Volg deze stappen om Rival op je eigen machine te draaien.
 
-Python 3.10 of hoger.
+### Stap 1: Vereisten
+Zorg dat je de volgende zaken geïnstalleerd hebt:
+* **Python 3.10** of hoger.
+* **Git** om de code te downloaden.
 
-Git om de repository te clonen.
-
-2. Installatie
-Clone de repository en ga naar de projectmap:
-
-Bash
-
+### Stap 2: Installatie
+Open je terminal en voer de volgende commando's uit:
+```bash
 git clone https://github.com/jouw-gebruikersnaam/rival-project.git
 cd rival-project
-3. Virtuele Omgeving
-Het wordt aangeraden om een virtuele omgeving te gebruiken om je dependencies gescheiden te houden:
+```
 
-Bash
-
-# Omgeving aanmaken
+### Stap 3: Virtuele Omgeving
+Het is aanbevolen om een virtuele omgeving te gebruiken:
+```bash
+## Aanmaken
 python -m venv venv
 
-# Activeren (Windows)
+## Activeren (Windows)
 venv\Scripts\activate
 
-# Activeren (Mac/Linux)
+## Activeren (Mac/Linux)
 source venv/bin/activate
-4. Dependencies Installeren
-Installeer alle benodigde pakketten, waaronder Flask, SQLAlchemy en de scraper-tools:
+```
 
-Bash
-
+### Stap 4: Dependencies Installeren
+Installeer alle benodigde bibliotheken (Flask, SQLAlchemy, etc.):
+```bash
 pip install -r requirements.txt
-5. Configuratie (Omgevingsvariabelen)
-Rival maakt gebruik van Supabase (PostgreSQL) en AI-modellen. Maak een bestand aan genaamd .env in de hoofdmap en voeg daar de volgende gegevens aan toe (vervang de placeholders door je eigen keys):
+```
 
-Codefragment
-
+### Stap 5: Configuratie (.env)
+Maak een bestand aan genaamd `.env` in de hoofdmap en voeg je eigen sleutels toe:
+```env
 OPENAI_API_KEY=jouw_openai_key
 GOOGLE_API_KEY=jouw_google_key
 DATABASE_URL=postgresql://gebruiker:wachtwoord@host:poort/postgres
-SECRET_KEY=een_geheime_sleutel_voor_sessies
-⚠️ Let op: Deel je .env bestand nooit met anderen en zet het niet op GitHub!
+SECRET_KEY=kies_een_veilig_wachtwoord
+```
+> **⚠️ Let op:** Deel je `.env` bestand nooit publiekelijk en zet het niet op GitHub!
 
-6. De App Starten
-Start de Flask development server met het volgende commando:
-
-Bash
-
+### Stap 6: De App Starten
+Start de Flask server:
+```bash
 flask run
-Zodra de server draait, kun je de app bekijken in je browser op http://127.0.0.1:5000.
+```
+Ga in je browser naar: [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
 
 
