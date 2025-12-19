@@ -1,10 +1,10 @@
-# 🚀 Rival MVP — Competitive Intelligence Dashboard
+# Rival MVP — Competitive Intelligence Dashboard
 
 **Partner:** StarApps  
 **Projectgroep:** UGent – Business Informatics  
 **Deadline:** 19 december 2025  
 
-🚀 **Live application (Render):**  
+**Live application (Render):**  
 https://web-application-2025-group-31-11.onrender.com
 
 ---
@@ -43,14 +43,80 @@ Gebruikers kunnen:
 
 ---
 
+
+## Lokale Installatie
+Volg deze stappen om een lokale kopie van Rival op je computer te draaien voor ontwikkeling of testen.
+
+1. Vereisten
+Zorg ervoor dat je de volgende software hebt geïnstalleerd:
+
+Python 3.10 of hoger.
+
+Git om de repository te clonen.
+
+2. Installatie
+Clone de repository en ga naar de projectmap:
+
+Bash
+
+git clone https://github.com/jouw-gebruikersnaam/rival-project.git
+cd rival-project
+3. Virtuele Omgeving
+Het wordt aangeraden om een virtuele omgeving te gebruiken om je dependencies gescheiden te houden:
+
+Bash
+
+# Omgeving aanmaken
+python -m venv venv
+
+# Activeren (Windows)
+venv\Scripts\activate
+
+# Activeren (Mac/Linux)
+source venv/bin/activate
+4. Dependencies Installeren
+Installeer alle benodigde pakketten, waaronder Flask, SQLAlchemy en de scraper-tools:
+
+Bash
+
+pip install -r requirements.txt
+5. Configuratie (Omgevingsvariabelen)
+Rival maakt gebruik van Supabase (PostgreSQL) en AI-modellen. Maak een bestand aan genaamd .env in de hoofdmap en voeg daar de volgende gegevens aan toe (vervang de placeholders door je eigen keys):
+
+Codefragment
+
+OPENAI_API_KEY=jouw_openai_key
+GOOGLE_API_KEY=jouw_google_key
+DATABASE_URL=postgresql://gebruiker:wachtwoord@host:poort/postgres
+SECRET_KEY=een_geheime_sleutel_voor_sessies
+⚠️ Let op: Deel je .env bestand nooit met anderen en zet het niet op GitHub!
+
+6. De App Starten
+Start de Flask development server met het volgende commando:
+
+Bash
+
+flask run
+Zodra de server draait, kun je de app bekijken in je browser op http://127.0.0.1:5000.
+
+
+
 ## Feedback sessions
 
 Audio recordings of the feedback sessions with our project partner:
 
 - **Feedback session 1:**  
   https://drive.google.com/file/d/1HSkTbfF5iNlQhHZGLmBCUQD71RoKzIZs/view?usp=sharing
+
 - **Feedback session 2:**  
-  *(to be added)*
+    Wegens technische problemen verliep de communicatie deze sprint via een Loom-video. De feedback werd per e-mail ontvangen.
+
+    Thanks voor de loom video - geeft me een duidelijk idee waar jullie vandaag staan. 
+    Zou handig zijn om er toch zelf even te kunnen doorlopen, waar staan jullie intussen met het live krijgen via Render? 
+    Verder kleinere vragen: 
+    Je geeft 3 opties om te exporteren: wat kan ik verwachten in een "VC memo"?
+    Hebben jullie een voorbeeld van een newsletter? Hoe is die gestructureerd?
+
 - **Feedback session 3:**  
   https://drive.google.com/file/d/1bfRbiPLT7Ammqkg0QMOAOPu0MHC_rU8_/view?usp=sharing
 
