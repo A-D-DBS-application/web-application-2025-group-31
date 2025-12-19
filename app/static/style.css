@@ -752,17 +752,30 @@ select:focus,
   position: sticky;
   top: 0;
   z-index: 1200;
-  background: rgba(255,255,255,0.9);
+
+  /* RIVAL-stijl i.p.v. wit/blauw */
+  background: linear-gradient(135deg, #0b1220, #0e1a2b);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+
+  /* blur mag, maar niet “wit” */
   backdrop-filter: blur(8px);
   padding: 10px 12px;
 }
 
-/* Hamburger */
+/* Hamburger (reset Bootstrap look + match sidebar) */
 .menu-btn{
-  font-size: 28px;
-  background: none;
-  border: none;
+  all: unset;                 /* reset bootstrap button styles */
+  font-size: 26px;
+  line-height: 1;
   cursor: pointer;
+
+  color: #f5f7fa;             /* match sidebar tekstkleur */
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+
+.menu-btn:hover{
+  background: rgba(255,255,255,0.08);
 }
 
 /* Overlay mobiel */
@@ -774,10 +787,11 @@ select:focus,
   z-index: 1090;
 }
 
-/* Alleen mobiel: maak de sidebar (die mobiele include) een drawer */
+/* Alleen mobiel: maak de sidebar een drawer + forceer verticaal menu */
 @media (max-width: 767.98px){
+
   .sidebar{
-    position: fixed !important;
+    position: fixed !important;     /* override sticky */
     top: 0;
     left: 0;
     width: 280px;
@@ -786,6 +800,10 @@ select:focus,
     transition: transform 0.25s ease;
     z-index: 1100;
     overflow-y: auto;
+
+    /* als jouw sidebar al dark is mag je deze weglaten,
+       maar dit voorkomt witte achtergrond door bootstrap */
+    background: #0b1220;
   }
 
   body.sidebar-open .sidebar{
@@ -795,5 +813,24 @@ select:focus,
   body.sidebar-open .overlay{
     display: block;
   }
+
+  /* ✅ Fix: menu-items niet horizontaal */
+  .sidebar nav{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .sidebar nav a{
+    display: block;     /* geen inline/inline-flex */
+    width: 100%;
+  }
+
+  .sidebar nav .label{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 }
+
 
