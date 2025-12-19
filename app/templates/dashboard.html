@@ -85,8 +85,9 @@
       <div class="grid-2">
 
         <div>
-          <h4 class="card-title">Bedrijven</h4>
-          <ul class="soft-list scroll">
+          <!-- ⬇️ ENIGE WIJZIGING: extra spacing onder titel -->
+          <h4 class="card-title mb-3">Bedrijven</h4>
+          <ul class="soft-list scroll mt-0">
             {% for c in companies %}
               <li>
                 <label class="checkbox-line">
@@ -100,8 +101,9 @@
         </div>
 
         <div>
-          <h4 class="card-title">Metrics</h4>
-          <ul class="soft-list scroll">
+          <!-- ⬇️ ENIGE WIJZIGING: extra spacing onder titel -->
+          <h4 class="card-title mb-3">Metrics</h4>
+          <ul class="soft-list scroll mt-0">
             {% for m in metric_options %}
               <li>
                 <label class="checkbox-line">
@@ -163,7 +165,6 @@
             <br>
             <span class="badge-soft">{{ a.time.strftime('%Y-%m-%d') }}</span>
           </li>
-
         {% endfor %}
       </ul>
 
@@ -186,6 +187,7 @@
 </section>
 
 {% endblock %}
+
 
 
 

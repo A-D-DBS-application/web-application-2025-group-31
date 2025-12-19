@@ -751,6 +751,10 @@ select:focus,
    MOBILE LAYOUT (SIDEBAR + WATCHLIST)
    Alleen ≤ 767.98px
    ========================= */
+/* =====================================================
+   MOBILE ONLY (≤ 767.98px)
+   Sidebar + Watchlist — PC blijft intact
+   ===================================================== */
 @media (max-width: 767.98px) {
 
   /* ===== MOBIELE TOPBAR ===== */
@@ -758,7 +762,6 @@ select:focus,
     position: sticky;
     top: 0;
     z-index: 1200;
-
     background: linear-gradient(135deg, #0b1220, #0e1a2b);
     border-bottom: 1px solid rgba(255,255,255,0.08);
     backdrop-filter: blur(8px);
@@ -811,17 +814,23 @@ select:focus,
     transform: translateX(0);
   }
 
-  /* Sidebar header altijd bovenaan */
+  /* Sidebar header: RIVAL altijd bovenaan */
   .sidebar-header{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+
     position: sticky;
     top: 0;
     z-index: 2;
+
     background: #0b1220;
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
   }
 
-  /* Sidebar nav verticaal */
+  /* Sidebar nav */
   .sidebar nav{
     display: flex;
     flex-direction: column;
@@ -840,9 +849,9 @@ select:focus,
     gap: 10px;
   }
 
-  /* ===== WATCHLIST ===== */
+  /* ===== WATCHLIST (PC layout + horizontal scroll) ===== */
 
-  /* Topbar stacking */
+  /* Page header stacking */
   .topbar{
     display: flex;
     flex-direction: column;
@@ -859,25 +868,21 @@ select:focus,
     line-height: 1.35;
   }
 
-  /* Tabel: scroll i.p.v. woord-afbreken */
+  /* Tabel: EXACT PC layout, alleen scrollbaar */
   .table-scroll{
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   .table{
-    width: max-content;
-    min-width: 100%;
+    width: 100%;          /* 🔑 GEEN max-content */
+    table-layout: auto;   /* zoals desktop */
   }
 
   .table th,
   .table td{
-    white-space: nowrap;
+    white-space: nowrap;  /* geen afbreken */
     word-break: normal;
-  }
-
-  .table td{
-    overflow-wrap: anywhere;
   }
 
   /* Audit lijst */
@@ -891,9 +896,10 @@ select:focus,
     gap: 6px;
     white-space: normal;
     word-break: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
     max-width: 100%;
   }
 }
+
 
 
