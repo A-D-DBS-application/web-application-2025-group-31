@@ -9,7 +9,6 @@ create table public.app_user (
   username text not null,
   email text not null,
   password_hash text not null,
-  weekly_digest boolean null default false,
   created_at timestamp with time zone null default now(),
   digest_frequency text null default 'weekly'::text,
   digest_signals jsonb null default '[]'::jsonb,

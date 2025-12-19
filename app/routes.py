@@ -14,6 +14,30 @@ bp = Blueprint('main', __name__)
 
 METRIC_OPTIONS = ["Pricing", "Features", "Reviews", "Funding", "Hiring"]
 
+#======================================================
+# COMPETITOR TEKST FUNCTIE
+#======================================================
+
+def competitor_to_text(c):
+    """
+    Zorgt dat een competitor altijd een string is
+    (nodig voor PPT export)
+    """
+    if isinstance(c, dict):
+        name = (c.get("name") or c.get("company_name") or "").strip()
+        desc = (c.get("description") or "").strip()
+
+        if name and desc:
+            return f"{name} — {desc}"
+        if name:
+            return name
+        if desc:
+            return desc
+
+        return str(c)
+
+    return str(c)
+
 # ======================================================
 # URL NORMALISATIE
 # ======================================================
@@ -1142,8 +1166,20 @@ def export_slides(company_id):
         slide = prs.slides.add_slide(layout)
         slide.shapes.title.text = title
         body = slide.placeholders[1].text_frame
-        for c in content_list:
-            body.add_paragraph().text = c
+
+        for c in (content_list or []):
+            if isinstance(c, dict):
+                name = c.get("name") or c.get("company_name") or ""
+                desc = c.get("description") or ""
+                text = name.strip()
+                if desc and desc.strip():
+                    text = f"{text} — {desc.strip()}" if text else desc.strip()
+                if not text:
+                    text = str(c)
+            else:
+                text = str(c)
+
+            body.add_paragraph().text = text
 
     add_slide("What they do", [
         company.value_proposition or "—",
@@ -1151,7 +1187,6 @@ def export_slides(company_id):
     ])
 
     add_slide("Target Segment", [company.target_segment or "—"])
-
     add_slide("Pricing", [company.pricing or "—"])
 
     if company.key_features:
@@ -1521,13 +1556,27 @@ def weekly_mail_settings():
     return render_template("weekly_mail.html", user=user)
 
 
+
 @bp.route("/update-weekly-mail", methods=["POST"])
 @login_required
 def update_weekly_mail():
     user = AppUser.query.get(session["user_id"])
-    user.weekly_digest = request.form.get("digest") == "on"
-    db.session.commit()
 
+    # Frequentie 
+    freq = (request.form.get("digest_frequency") or "").strip().lower()
+    if freq == "":
+        user.digest_frequency = None
+    else:
+        if freq not in ("daily", "weekly", "monthly"):
+            freq = "weekly"
+        user.digest_frequency = freq
+
+    # Signals (meerdere checkbox values)
+    signals = request.form.getlist("digest_signals")
+    allowed_signals = {"pricing_change", "new_feature", "segment_change", "hiring", "funding"}
+    user.digest_signals = [s for s in signals if s in allowed_signals]
+
+    db.session.commit()
     return redirect(url_for("main.weekly_mail_settings"))
 
 

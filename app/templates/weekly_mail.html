@@ -6,7 +6,7 @@
 <div class="topbar d-flex flex-wrap gap-2">
   <div class="topbar-left">
     <h1>Digest Instellingen</h1>
-    <div class="subtitle">Beheer uw wekelijkse e-mailnotificaties en inhoud</div>
+    <div class="subtitle">Beheer uw e-mailnotificaties en inhoud</div>
   </div>
 
   <div class="topbar-right">
@@ -16,22 +16,22 @@
 
 <div class="card">
   <div class="card-header">
-    <h2 class="card-title">Instellingen Wekelijkse Digest</h2>
-    <span class="card-meta">E-mailfrequentie en Signaaltypes</span>
+    <h2 class="card-title">Digest instellingen</h2>
+    <span class="card-meta">E-mailfrequentie en signaaltypes</span>
   </div>
 
   <div class="card-body">
     <form action="{{ url_for('main.update_weekly_mail') }}" method="POST">
 
       <div class="form-group">
-        <label for="frequency" class="form-label">Frequentie</label>
+        <label for="digest_frequency" class="form-label">Frequentie</label>
 
-        <select id="frequency" name="frequency" class="form-control w-100 w-md-auto">
+        <select id="digest_frequency" name="digest_frequency" class="form-control w-100 w-md-auto">
           <option value="" {% if not user.digest_frequency or user.digest_frequency == '' %}selected{% endif %}>
-            Digest uitschakelen (Geen mails)
+            Geen nieuwsbrief (geen mails)
           </option>
+          <option value="daily" {% if user.digest_frequency == 'daily' %}selected{% endif %}>Dagelijks</option>
           <option value="weekly" {% if user.digest_frequency == 'weekly' %}selected{% endif %}>Wekelijks</option>
-          <option value="biweekly" {% if user.digest_frequency == 'biweekly' %}selected{% endif %}>Twee-wekelijks</option>
           <option value="monthly" {% if user.digest_frequency == 'monthly' %}selected{% endif %}>Maandelijks</option>
         </select>
 
@@ -111,8 +111,9 @@
   </p>
 </div>
 
-
 {% endblock %}
+
+
 
 
 

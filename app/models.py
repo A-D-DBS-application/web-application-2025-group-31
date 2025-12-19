@@ -62,7 +62,6 @@ class AppUser(db.Model):
     email = db.Column(db.Text, nullable=False, unique=True)
     password_hash = db.Column(db.Text, nullable=False)
 
-    weekly_digest = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     digest_frequency = db.Column(db.Text, default="weekly")
     digest_signals = db.Column(db.JSON, default=list)
